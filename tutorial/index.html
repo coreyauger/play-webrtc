@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+
+Tutorial
+The tutorial for a template is in a tutorial/index.html file. Each section of the tutorial must be in a <div> tag that is inside the <body> tag. Each section must have a single <h2> tag that contains the section's title. The tutorial can provide shortcut links to places in Activator by using an anchor link (#) and the shortcut class, like:
+
+    <a href="#code/tutorial/index.html" class="shortcut">/tutorial/index.html</a>
+    Code blocks can use <pre><code></code></pre> tags, like:
+
+<pre><code>println("hello, Scala!")
+    val foo = "Bar"</code></pre>
+    In-line code can use just the <code></code> tag, like:
+
+    The <code>val foo = "Bar"</code> statement sets <code>foo</code> to <code>Bar</code>
+    Images can be embedded by putting them in the tutorial directory and using a relative URL to the image, like:
+
+    <img src="tutorial/tutorial.png">
+
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+@(meta: Html)(scripts: Html)(content: Html)
+
+<!DOCTYPE html>
+
+<html ng-app="webrtcApp">
+<head>
+    <title>play-webrtc</title>
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+
+    <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap-3.1.1-dist/css/bootstrap.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/style.css")">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="@routes.Assets.at("javascripts/ext/rxjs/2.2.20/rx.lite.compat.min.js")"></script>
+    <script src="@routes.Assets.at("javascripts/ext/rxjs/2.2.20/rx.async.min.js")"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular-route.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular-sanitize.js"></script>
+    <script src='@routes.Assets.at("javascripts/ui-bootstrap-tpls-0.10.0.min.js")'></script>
+
+    @meta
+
+    @scripts
+</head>
+<body>
+
+    @content
+</body>
+</html>
