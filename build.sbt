@@ -1,3 +1,6 @@
+import com.typesafe.sbt.web.SbtWeb.autoImport._
+import com.typesafe.sbt.less.Import.LessKeys
+
 name := """play-webrtc"""
 
 version := "1.0-SNAPSHOT"
@@ -12,3 +15,8 @@ libraryDependencies ++= Seq(
   cache,
   ws
 )
+
+includeFilter in (Assets, LessKeys.less) := "*.less"
+
+// for minified *.min.css files
+LessKeys.compress := true

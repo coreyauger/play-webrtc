@@ -17,13 +17,13 @@ window.WorkerData =
 #
 # CometSocket class
 class CometSocket
-  constructor: (uuid, token, domain) ->
+  constructor: (uuid, domain) ->
     @url = uuid
     console.log("CometSocket calling create")
     @$frame = $('#comet')
     if( this.$frame.size() == 0 )
       #$('body').append('<iframe id="comet" src="http://'+domain+':9009/ws/comet/'+uuid+'/'+token+'/'+WorkerData.currentChatId+'" style="visibility: hidden"></iframe>')
-      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+uuid+'/'+token+'/'+WorkerData.currentChatId+'" style="visibility: hidden"></iframe>')
+      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+uuid+'/'+WorkerData.currentChatId+'" style="visibility: hidden"></iframe>')
       @.$frame = $('#comet')
   send: (data) ->
     console.log("CometSocket SEND")
@@ -38,10 +38,9 @@ class CometSocket
 
 #
 # Worker Class
-class window.WalkaboutWorker
-  constructor: (uuid, username, token, chatid, $rootScope, domain) ->
+class window.NGWorker
+  constructor: (uuid, username, chatid, $rootScope, domain) ->
     @uuid = uuid
-    @token = token
     @domain = domain || self.location.hostname
     @$rootScope = $rootScope
     @username = username
@@ -49,17 +48,20 @@ class window.WalkaboutWorker
     @retrySocket = true
     @retryTimeout = 5000
     @subjects = {}
+
     @controllerOps =
-      uuid: => parseInt(@uuid)
+      uuid: => @uuid
       username: -> @username
       subject: (subject) => @subject(subject)
       onNext: (data) => @onNext(data)
+      webrtc: => @webrtc
       broadcast: (evn, args) =>
         @$rootScope.$broadcast(evn, args)
       verifyConnection: =>
         if( !@isConnected && @retrySocket)
           @connect()
     @connect()
+    @webrtc = new window.WebRTC(@)
   onSocketClose: null       # callback
   socketRetry: ->
     @isConnected = false
@@ -106,7 +108,7 @@ class window.WalkaboutWorker
 
 #
 # WalkaboutSocketWorker
-class window.WalkaboutSocketWorker extends WalkaboutWorker
+class window.SocketWorker extends NGWorker
   constructor: (uuid, username, token, chatid, $rootScope, domain) ->
     super(uuid, username, token, chatid, $rootScope, domain)
   connect: ->
@@ -123,10 +125,10 @@ class window.WalkaboutSocketWorker extends WalkaboutWorker
           ws.onopen({})  # fire the open event..
         ,2500)
       else
-        # TODO: for mobile web clients.. will be need a "ping" the same as we have to for the native client
-        #this.ws = new WebSocket('wss://'+@domain+':9009/api/'+this.uuid+'/'+this.token+'/'+WorkerData.currentChatId);
         try
-          @ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+'/'+@token+'/'+WorkerData.currentChatId);
+          # NOTE: you should always use wss .. regular ws connections will be cached and proxied and therefor be messed up in the real world
+          #@ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+'/'+WorkerData.currentChatId);
+          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@uuid+'/'+WorkerData.currentChatId);
         catch e
           @socketRetry()
 
@@ -146,7 +148,7 @@ class window.WalkaboutSocketWorker extends WalkaboutWorker
           # Send any pending request..
           console.log("Sending " + WorkerData.pending.length + " items from queue")
           for p of WorkerData.pending
-            WorkerData.Worker.onNext( WorkerData.pending[p] )
+            @onNext( WorkerData.pending[p] )
           WorkerData.pending = []    # clear the queue
         ,0)
       @ws.onerror = (evt) =>

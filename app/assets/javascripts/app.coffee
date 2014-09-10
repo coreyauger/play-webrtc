@@ -18,11 +18,11 @@ webrtcApp.config(($locationProvider,$routeProvider) ->
   $routeProvider.when('/home',
     templateUrl: '/assets/partials/home.html',
     controller: 'HomeCtrl'
-  ).when('/history',
-    templateUrl: '/assets/partials/history.html',
-    controller: 'HistoryCtrl'
+  ).when('/room/:room',
+    templateUrl: '/assets/partials/room.html',
+    controller: 'RoomCtrl'
   ).otherwise({
-    redirectTo: '/apps'
+    redirectTo: '/home'
   })
 )
 
@@ -37,13 +37,6 @@ webrtcApp.run(($rootScope, $location, worker, $modal, $sce) ->
 
   $rootScope.webrtc =
     support: DetectRTC
-
-  userSubject = worker.subject('user')
-  userSubject.filter( (d) -> d.op == 'providers' ).subscribe( (data) ->
-    window.WorkerData.username = data.ret.filter( (p) -> p.fullName != '' )[0].fullName
-  )
-
-  worker.onNext({slot:'user',op:'providers',data:{}})
 
   window.addEventListener('online',  ->
     $rootScope.page.online = true

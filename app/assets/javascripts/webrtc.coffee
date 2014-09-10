@@ -98,7 +98,7 @@ class window.WebRTC
   send: (op, data) ->
     #actors = Object.keys( @peers )
     data.peer_id = @worker.jid
-    @worker.send({slot:'webrtc',op:op,data:data})
+    @worker.onNext({slot:'webrtc',op:op,data:data})
 
   stop: ->
     console.log('webrtc::stop')
@@ -112,7 +112,9 @@ class window.WebRTC
       'jid': @worker.jid
     })
     @peers = {}
-    @localStream.close()
+    if( @localStream? )
+      @localStream.stop()
+      @localStream = null
 
   muteVideo: (mute) ->
     if @localStream
@@ -122,14 +124,14 @@ class window.WebRTC
     if @localStream
       @localStream.getAudioTracks()[0].enabled = !mute
 
-  init: (chatid,offer) ->
+  init: (room,offer) ->
     console.log("Initializing...")
     @initWebRTCAdapter()
     @doGetUserMedia( =>
       # once the user has given us access to their
       # microphone/camcorder, join the channel and start peering up
       #@send('join',{chatid:chatid,sendOffer:offer})
-      @send('join',{chatid:chatid,sendOffer:offer})
+      @send('join',{room:room,sendOffer:offer})
     )
 
   onAddRemoteStream: null

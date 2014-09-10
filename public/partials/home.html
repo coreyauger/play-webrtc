@@ -1,0 +1,48 @@
+
+    <div class="jumbotron detect">
+        <h2 ng-show="detect.isWebRTCSupported" class="supported">WebRTC Supported <span class="glyphicon glyphicon-ok"></span></h2>
+        <h2 ng-show="!detect.isWebRTCSupported" class="fail">WebRTC NOT Supported <span class="glyphicon glyphicon-remove"></span></h2>
+        <ul class="list-group ">
+            <li class="list-group-item">Has Microphone <span class="value">{{detect.hasMicrophone}}</span></li>
+            <li class="list-group-item">Has Webcam <span class="value">{{detect.hasWebcam}}</span></li>
+            <li class="list-group-item">Audio Context <span class="value">{{detect.isAudioContextSupported}}</span></li>
+            <li class="list-group-item">Screen Capture <span class="value">{{detect.isScreenCapturingSupported}}</span></li>
+            <li class="list-group-item">Data Channel (SCTP) <span class="value">{{detect.isSctpDataChannelsSupported}}</span></li>
+            <li class="list-group-item">Data Channel (RTP) <span class="value">{{detect.isRtpDataChannelsSupported}}</span></li>
+        </ul>
+    </div>
+
+
+
+    <div class="panel panel-default row">
+        <div class="panel-heading">
+            Create a new room
+        </div>
+        <div class="panel-body center">
+
+            <div class="input-group">
+                <input type="text" ng-model="room" placeholder="Name of chat room .." class="form-control">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" ng-click="joinRoom(room)" type="button">Join!</button>
+                </span>
+            </div><!-- /input-group -->
+
+        </div>
+    </div>
+
+    <div class="page-header">
+        <h1>Active Rooms <small><span class="badge">{{roomList.length}}</span></small></h1>
+    </div>
+
+    <div class="row">
+        <div ng-repeat="r in roomList" class="col-sm-6 col-md-3">
+            <div class="thumbnail appcard">
+                <img class="icon" data-src="holder.js/200x100" alt="300x200" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE1MCIgeT0iMTAwIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjE5cHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+MzAweDIwMDwvdGV4dD48L3N2Zz4=" style="width: 200px; height: 100px;">
+                <div class="caption">
+                    <a ng-href="#/room/{{r.name}}" class="btn btn-primary pull-right" role="button">Join</a>
+                    <h3>{{ r.name }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+

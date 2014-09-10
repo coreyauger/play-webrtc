@@ -6,6 +6,7 @@ import java.util.TimeZone
 import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
+import play.api.libs.ws.WS
 import scala.Predef._
 
 import scala.concurrent.Future
@@ -36,6 +37,15 @@ case class JsonRequest(subjectOp: String, json: JsValue, sync:Option[(Concurrent
  * Created by corey auger on 08/09/14.
  */
 
+class Room(val name:String){
+  var members = Set[String]()
+  def toJson = {
+    Json.obj(
+      "name" -> name,
+      "members" -> members
+    )
+  }
+}
 
 
 class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorLogging{
@@ -48,6 +58,67 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
   val dateFormatUtc: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
   dateFormatUtc.setTimeZone(TimeZone.getTimeZone("UTC"))
 
+
+  lazy val ops = Map[String, ((JsValue) => Future[JsValue])](
+    "room-join" -> ((json: JsValue) =>{
+      val name = (json \ "data" \ "name").as[String]
+      // NOTE: this is not syncronized ... you would want something similar to LockActor for this.
+      UserActor.rooms.get(name) match {
+        case Some(room) =>
+          room.members += uuid
+          Future.successful(room.toJson)
+        case None =>
+          val r = new Room(name)
+          r.members += uuid
+          UserActor.rooms += (name -> r)
+          Future.successful(r.toJson)
+      }
+    }),
+    "room-list" -> ((json: JsValue) => {
+        Future.successful(Json.obj(
+          "rooms" -> UserActor.rooms.values.map(_.toJson)
+        ))
+    }),
+    "webrtc-relay" ->((json: JsValue) =>{
+      log.info(s"webrtc: $json")
+      val data = (json \ "data" ).as[JsObject]
+      val room = (json \ "room" ).as[String]
+      // this is from another user.. to send back down socket channels..
+      Future.successful(Json.arr(Json.obj( "room" -> room, "uuid" -> uuid, "data" -> data )) )
+    }),
+    "webrtc-join" ->((json: JsValue) =>{
+      log.info(s"webrtc: $json")
+      val room = (json \ "data" \ "room" ).as[String]
+      //val offer = (json \ "data" \ "sendOffer" ).as[Boolean]
+      log.debug(s"WEBRTC::JOIN chatid $room")
+      // The Joiner is ALWAYS the initiator for the new connections to the peers...
+      // TODO: We are sending to more accounts then we need to by getting a list of ALL providers in the chat
+        val members = UserActor.rooms(room).members
+        println(s"You: $uuid")
+        val others = members.filterNot(_ == uuid)
+        log.debug("RELAY addPeer Other %s".format(others.mkString(",") ))
+        members.foreach( uid => UserActor.usermap.get(uid) match{
+          case Some(ua) =>
+            UserActor.route(uuid, ua,JsonRequest("api-api",Json.obj(
+              "room" -> room,
+              "slot" -> "webrtc",
+              "op" -> "relay",
+              "data" -> Json.obj(
+                "room" -> room,
+                "actors" -> others,
+                "type" -> "addPeer",
+                "uuid" -> uuid,
+                "sendOffer" -> true
+              )
+            )))
+          case None =>
+            // remove the user
+            UserActor.usermap -= uid
+        })
+      Future.successful( Json.obj() )
+    })
+  )
+
   def receive = {
     case jr:JsonRequest =>
       // TODO: this whole case bs is pretty ugly.. lets find a better way to do this.
@@ -58,6 +129,25 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
       // 0 or not present: Sync down all sockets channels that belong to this user
       // 1: sync ONLY with the socket the message was sent from
       // TODO: send to other actors..
+      log.info(s"About to perform op: ${jr.subjectOp}")
+      val fJson:Future[JsValue] = ops.get(jr.subjectOp).get.apply(jr.json)
+      fJson.onSuccess{
+        case json =>
+          println(s"returning: $json")
+          socketmap.values.foreach {
+            case (soc, isComet) =>
+              soc.push(Json.obj(
+                "slot" -> slot,
+                "op" -> op,
+                "data" ->json
+              ))
+              // (CA) - this is super lame...
+              // we need to pad come request.. and turn off gzip to all for each request to be pushed more info on my blog.
+              if (isComet)
+                soc.push(Json.obj("padding" -> Array.fill[Char](25 * 1024)(' ').mkString))
+          }
+      }
+
 
     case c: UserSocketConnect =>
       log.info(s"UserActor::UserSocketConnect")
@@ -84,6 +174,8 @@ object UserActor{
   // TODO: for now this is a hack memory storage...
   var usermap = Map[String,ActorRef]()
   val lockActor = Akka.system.actorOf(Props(new LockActor()))
+  var rooms = Map[String, Room]()
+
 
   def findUserActor(uuid: String):Option[ActorRef] ={
     println(s"Actor $uuid")

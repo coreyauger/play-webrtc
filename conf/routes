@@ -3,7 +3,17 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
+GET         /                                   controllers.Application.index
+
+# Websocket API
+GET         /api/:uuid/                         controllers.Application.api(uuid, chatid="0")
+GET         /api/:uuid/:chatid                  controllers.Application.api(uuid, chatid)
+
+# Web service
+GET         /ws/comet/:uuid/:chatid             controllers.Application.comet(uuid, chatid)
+POST        /ws/comet/send/:uuid                controllers.Application.cometSend(uuid, chatid = "0")
+POST        /ws/comet/send/:uuid/:chatid        controllers.Application.cometSend(uuid, chatid)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

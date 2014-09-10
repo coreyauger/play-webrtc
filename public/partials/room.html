@@ -1,0 +1,32 @@
+
+
+
+
+<div class="row">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation">
+        <ul class="nav navbar-nav navbar-right">
+            <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
+            <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
+            <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
+            <li style="width: 25px;">&nbsp;</li>
+        </ul>
+    </nav>
+</div>
+
+
+
+<div style="padding: 10px 15px;" class="cols">
+
+
+    <div class="panel panel-default pin" ng-repeat="peer in peers">
+        <div class="panel-heading">Peer {{peer.id}}</div>
+        <div class="panel-body center">
+            <div id="video{{peer.id}}" class="video-holder">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+

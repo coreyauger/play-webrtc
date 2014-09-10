@@ -1,4 +1,4 @@
-@(message: String)
+@(uuid: String)
 
 
 @meta = {
@@ -9,14 +9,63 @@
 }
 
 @scripts = {
-<script src="@routes.Assets.at("javascripts/worker.rx.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("javascripts/app.js")"></script>
-<script src="@routes.Assets.at("javascripts/controllers.js")"></script>
+<script src='@routes.Assets.at("javascripts/webrtc.js")' type="text/javascript"></script>
+<script src='@routes.Assets.at("javascripts/worker.rx.js")' type="text/javascript"></script>
+<script src='@routes.Assets.at("javascripts/app.js")'></script>
+<script src='@routes.Assets.at("javascripts/controllers.js")'></script>
+<script language="JavaScript">
+    _uuid = '@uuid';
+</script>
 }
 
 
 @main(meta)(scripts)  {
 
-  <h1>TEST</h1>
+<div ng-controller="AppCtrl">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+            <form class="navbar-form navbar-left pull-right" role="search">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+            </form>
+            <ul class="nav navbar-nav pull-right">
+                <li class="active"><a href="#/home">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Rooms <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a ng-click="newAppModal()" href="javascript: ;">Create New</a></li>
+                        <li class="divider"></li>
+                        <li ng-repeat="r in roomList"><a ng-href="#/room/{{r.name}}">{{r.name}}</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/home">See All</a></li>
+                    </ul>
+                </li>
+                <li><a href="#/docs">Docs</a></li>
+
+            </ul>
+
+            <a id="titleLink" class="brand" href="#/home" style="margin-top: 10px; display: block;"><img class="header-logo" src="/assets/images/logo.png"> play-webrtc</a>
+
+        </div>
+    </nav>
+
+    <div class="container">
+        <div ng-view></div>
+    </div>
+
+
+    <footer>
+        <nav class="navbar navbar-default navbar-static-bottom" style="margin-bottom: 0px;">
+            <div class="container">
+                <div class="copyright">© 2014 Nextwave Software Inc.</div>
+            </div>
+        </nav>
+    </footer>
+</div>
+
+
+
 
 }

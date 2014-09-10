@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.UUID
+
 import play.api._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -14,7 +16,8 @@ import scala.concurrent._
 object Application extends Controller {
 
   def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+    val uid = UUID.randomUUID().toString
+    Ok(views.html.index(uid))
   }
 
   // don't forget to secure this...
