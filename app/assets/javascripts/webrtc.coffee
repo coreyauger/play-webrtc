@@ -215,6 +215,9 @@ class window.WebRTC
     @peers[peer_id] = peer_connection
     peer_connection.oniceconnectionstatechange = (ev) ->
       console.log('oniceconnectionstatechange', ev)
+      console.log('peer_connection.iceConnectionState == ' + peer_connection.iceConnectionState )
+      if( peer_connection.iceConnectionState == 'completed' )
+        console.log('WE HAVE A PEER CONNECTION....')
     peer_connection.onicecandidate = (event) =>
       if (event.candidate)
         @send('relay', {
