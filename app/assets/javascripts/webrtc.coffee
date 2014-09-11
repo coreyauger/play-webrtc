@@ -216,15 +216,15 @@ class window.WebRTC
         })
 
     peer_connection.onaddstream = (event) =>
-      console.log("onAddStream: " + event)
+      console.log("onAddStream: ", event)
       remote_media = if @USE_VIDEO
                         $("<video>")
                      else
                         $("<audio>");
       remote_media.attr("autoplay", "true");
-      remote_media.attr("controls", "")
+      #remote_media.attr("controls", "")
       @peerMedia[peer_id] = remote_media
-
+      console.log('attachMediaStream',remote_media[0])
       attachMediaStream(remote_media[0], event.stream)
       if( @onAddRemoteStream != null)
         @onAddRemoteStream(peer_id,remote_media)
@@ -233,7 +233,7 @@ class window.WebRTC
 
     # Add our local stream
     if( @localStream? )
-      console.log('adding local stream')
+      console.log('Adding local stream', @localStream)
       peer_connection.addStream(@localStream)
     else
       console.log('[WARN] - localStream could not be added to peer_connection, localStream',@localStream)
@@ -242,6 +242,7 @@ class window.WebRTC
     # offer, the signaling server picks one to be the offerer.
     # The other user will get a 'sessionDescription' event and will
     # create an offer, then send back an answer 'sessionDescription' to us
+    console.log('config',config)
     if (config.sendOffer)
       console.log("Creating RTC offer to " + peer_id)
       peer_connection.createOffer((local_description) =>
