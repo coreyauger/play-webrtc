@@ -210,9 +210,10 @@ class window.WebRTC
       console.log("Already connected to peer " + peer_id)
       return
 
-    peer_connection = new RTCPeerConnection(@pc_config, {"optional": [{"DtlsSrtpKeyAgreement": true}]} )
+    peer_connection = new RTCPeerConnection(@pc_config, {"optional": []} )
     @peers[peer_id] = peer_connection
-
+    peer_connection.oniceconnectionstatechange = (ev) ->
+      console.log('oniceconnectionstatechange', ev)
     peer_connection.onicecandidate = (event) =>
       if (event.candidate)
         @send('relay', {
@@ -245,7 +246,7 @@ class window.WebRTC
       console.log('Adding local stream', @localStream)
       peer_connection.addStream(@localStream)
     else
-      console.log('[WARN] - localStream could not be added to peer_connection, localStream',@localStream)
+      console.log('[ERROR] - localStream could not be added to peer_connection, localStream',@localStream)
 
     # Only one side of the peer connection should create the
     # offer, the signaling server picks one to be the offerer.
@@ -274,8 +275,9 @@ class window.WebRTC
             }
           )
           console.log("Offer setLocalDescription succeeded")
-        , ->
-          Alert("Offer setLocalDescription failed!")
+        , (er) ->
+          console.log('setLocalDescription failed', er)
+          alert("Offer setLocalDescription failed!")
         )
       , (error) ->
         console.log("Error sending offer: "+error)
