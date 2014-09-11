@@ -59,35 +59,12 @@ class window.WebRTC
     @sdpConstraints = {'mandatory': {'OfferToReceiveAudio':true, 'OfferToReceiveVideo':true }}
     @pc_config = {"iceServers":
           [
-              {url:'stun:stun.l.google.com:19302'},
-              {url:'stun:stun01.sipphone.com'},
-              {url:'stun:stun.ekiga.net'},
-              {url:'stun:stun.fwdnet.net'},
-              {url:'stun:stun.ideasip.com'},
-              {url:'stun:stun.iptel.org'},
-              {url:'stun:stun.rixtelecom.se'},
-              {url:'stun:stun.schlund.de'},
-              {url:'stun:stun.l.google.com:19302'},
-              {url:'stun:stun1.l.google.com:19302'},
-              {url:'stun:stun2.l.google.com:19302'},
-              {url:'stun:stun3.l.google.com:19302'},
-              {url:'stun:stun4.l.google.com:19302'},
-              {url:'stun:stunserver.org'},
-              {url:'stun:stun.softjoys.com'},
-              {url:'stun:stun.voiparound.com'},
-              {url:'stun:stun.voipbuster.com'},
-              {url:'stun:stun.voipstunt.com'},
-              {url:'stun:stun.voxgratia.org'},
-              {url:'stun:stun.xten.com'},
+              #{url:'stun:stun.l.google.com:19302'},
+              {url:'stun:waturn.cloudapp.net'},
               {
                   url: 'turn:waturn.cloudapp.net:443?transport=tcp',
                   credential: 'walkaboutpass',
                   username: 'walkabout'
-              },
-              {
-                  url: 'turn:numb.viagenie.ca',
-                  credential: 'muazkh',
-                  username: 'webrtc@live.com'
               },
               {
                   url: 'turn:192.158.29.39:3478?transport=udp',
@@ -294,7 +271,6 @@ class window.WebRTC
       merged.mandatory[name] = cons2.mandatory[name]
     merged.optional = merged.optional.concat(cons2.optional)
     merged
-
 
   # Peers exchange session descriptions which contains information
   # about their audio / video settings and that sort of stuff. First

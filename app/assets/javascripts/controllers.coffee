@@ -86,9 +86,8 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
   roomSubject = worker.subject('room')
   roomSub = roomSubject.filter( (r) -> r.op == 'join' ).subscribe( (ret) ->
-    alert(ret.data.members)
     console.log('ret.data.members',ret.data.members)
-    worker.webrtc().init($scope.room, ret.data.members.length > 1)
+    worker.webrtc().init($scope.room, true)
   )
 
 
