@@ -232,8 +232,11 @@ class window.WebRTC
         $('body').append(remote_media)
 
     # Add our local stream
-    console.log('adding local stream')
-    peer_connection.addStream(@localStream)
+    if( @localStream? )
+      console.log('adding local stream')
+      peer_connection.addStream(@localStream)
+    else
+      console.log('[WARN] - localStream could not be added to peer_connection, localStream',@localStream)
 
     # Only one side of the peer connection should create the
     # offer, the signaling server picks one to be the offerer.
