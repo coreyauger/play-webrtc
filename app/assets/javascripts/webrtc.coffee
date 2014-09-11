@@ -196,6 +196,7 @@ class window.WebRTC
         console.log('WE HAVE A PEER CONNECTION....')
     peer_connection.onicecandidate = (event) =>
       if (event.candidate)
+        console.log('onicecandidate: ' + peer_connection.icegatheringstatus)
         @send('relay', {
                   'type':'iceCandidate'
                   'actors': [peer_id],
@@ -206,6 +207,7 @@ class window.WebRTC
         })
     peer_connection.onsignalingstatechange = (ev) ->
       console.log('Signaling state changed to: ' + peer_connection.signalingState)
+      console.log('icegatheringstatus: ' + peer_connection.icegatheringstatus)
 
     peer_connection.onaddstream = (event) =>
       console.log("onAddStream: ", event)
