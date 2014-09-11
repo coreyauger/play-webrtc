@@ -286,46 +286,44 @@ class window.WebRTC
       console.log('[WARN] - could not locate peer for peer id: '+peer_id)
       console.log('this must be the offer...')
       @doGetUserMedia( =>
-        @addPeer({uuid:peer_id, sendOffer:false})
+        peer = @addPeer({uuid:peer_id, sendOffer:false})
         # now we have the peer so lets try this again.
-        @setRemoteDescription(config)
+        @sessionDescription(config)
       )
     else
-      @setRemoteDescription(config, peer, peer_id)
+      remote_description = config.session_description
+      console.log(config.session_description)
 
-  setRemoteDescription: (config, peer, peer_id) ->
-    remote_description = config.session_description
-    console.log(config.session_description)
+      desc = new RTCSessionDescription(remote_description)
+      console.log("Description Object: ", desc)
 
-    desc = new RTCSessionDescription(remote_description)
-    console.log("Description Object: ", desc)
 
-    peer.setRemoteDescription(desc, =>
-      console.log("setRemoteDescription succeeded")
-      if (remote_description.type == "offer")
-        console.log("Creating answer");
-        peer.createAnswer((local_description) =>
-          console.log("Answer description is: ", local_description);
-          peer.setLocalDescription(local_description
-          , =>
-            @send('relay',
-              {
-                'type':'sessionDescription'
-                'actors': [peer_id],
-                'session_description': local_description
-              }
+      peer.setRemoteDescription(desc, =>
+        console.log("setRemoteDescription succeeded")
+        if (remote_description.type == "offer")
+          console.log("Creating answer");
+          peer.createAnswer((local_description) =>
+            console.log("Answer description is: ", local_description);
+            peer.setLocalDescription(local_description
+            , =>
+              @send('relay',
+                {
+                  'type':'sessionDescription'
+                  'actors': [peer_id],
+                  'session_description': local_description
+                }
+              )
+              console.log("Answer setLocalDescription succeeded")
+            , ->
+              alert("Answer setLocalDescription failed!")
             )
-            console.log("Answer setLocalDescription succeeded")
-          , ->
-            alert("Answer setLocalDescription failed!")
-          )
-        , (error) ->
-          console.log("Error creating answer: ", error)
-          console.log(peer)
-        ,sdpConstraints)
-    ,(error) ->
-      console.log("setRemoteDescription error: ", error)
-    )
+          , (error) ->
+            console.log("Error creating answer: ", error)
+            console.log(peer)
+          ,sdpConstraints)
+      ,(error) ->
+        console.log("setRemoteDescription error: ", error)
+      )
 
 
 
