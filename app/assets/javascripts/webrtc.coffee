@@ -246,27 +246,26 @@ class window.WebRTC
         ]
       }
       constraints = @mergeConstraints(offerConstraints, sdpConstraints)
-      setTimeout(=>
-        peer_connection.createOffer((local_description) =>
-          console.log("Local offer description is: ", local_description)
-          peer_connection.setLocalDescription(local_description
-          , =>
-            @send('relay',
-              {
-                'type':'sessionDescription',
-                'actors': [peer_id],
-                'session_description': local_description
-              }
-            )
-            console.log("Offer setLocalDescription succeeded")
-          , (er) ->
-            console.log('setLocalDescription failed', er)
-            alert("Offer setLocalDescription failed!")
+
+      peer_connection.createOffer((local_description) =>
+        console.log("Local offer description is: ", local_description)
+        peer_connection.setLocalDescription(local_description
+        , =>
+          @send('relay',
+            {
+              'type':'sessionDescription',
+              'actors': [peer_id],
+              'session_description': local_description
+            }
           )
-        , (error) ->
-          console.log("Error sending offer: "+error)
-        ,constraints)
-      ,5000)
+          console.log("Offer setLocalDescription succeeded")
+        , (er) ->
+          console.log('setLocalDescription failed', er)
+          alert("Offer setLocalDescription failed!")
+        )
+      , (error) ->
+        console.log("Error sending offer: "+error)
+      ,constraints)
     peer_connection
 
   mergeConstraints: (cons1, cons2) ->
