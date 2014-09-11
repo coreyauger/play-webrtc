@@ -191,7 +191,6 @@ class window.WebRTC
     peer_connection = new RTCPeerConnection(@pc_config, {"optional": []} )
     @peers[peer_id] = peer_connection
     peer_connection.oniceconnectionstatechange = (ev) ->
-      console.log('oniceconnectionstatechange', ev)
       console.log('peer_connection.iceConnectionState == ' + peer_connection.iceConnectionState )
       if( peer_connection.iceConnectionState == 'completed' )
         console.log('WE HAVE A PEER CONNECTION....')
@@ -205,6 +204,8 @@ class window.WebRTC
                     'candidate': event.candidate.candidate
                   }
         })
+    peer_connection.onsignalingstatechange = (ev) ->
+      console.log('Signaling state changed to: ' + peer_connection.signalingState)
 
     peer_connection.onaddstream = (event) =>
       console.log("onAddStream: ", event)
@@ -287,9 +288,7 @@ class window.WebRTC
       @doGetUserMedia( =>
         peer = @addPeer({uuid:peer_id, sendOffer:false})
         # now we have the peer so lets try this again.
-        setTimeout(=>
-          @sessionDescription(config)
-        ,3500)
+        @sessionDescription(config)
       )
     else
       remote_description = config.session_description
@@ -341,7 +340,7 @@ class window.WebRTC
       , ->
         console.log('Added the ICE Candidate.')
       , (err) ->
-        console.log('[ERROR] - ICE Candidate.' + err)
+        console.log('[ERROR] - ICE Candidate. ' + err)
       )
     else
       #alert('[ERROR] - no peer for peer_id: '+config.peer_id)
