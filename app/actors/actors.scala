@@ -97,7 +97,7 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
         println(s"You: $uuid")
         val others = members.filterNot(_ == uuid)
         log.debug("RELAY addPeer Other %s".format(others.mkString(",") ))
-        members.foreach( uid => UserActor.usermap.get(uid) match{
+        members.filterNot(_ == uuid).foreach( uid => UserActor.usermap.get(uid) match{
           case Some(ua) =>
             UserActor.route(uuid, ua,JsonRequest("webrtc-relay",Json.obj(
               "room" -> room,

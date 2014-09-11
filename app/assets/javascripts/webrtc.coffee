@@ -38,6 +38,7 @@ class window.WebRTC
       if( @readyToRock && data.data && data.data[0] )
         obj = data.data[0].data
         if( obj )
+          console.log('WEBRTC OP: '+obj.type)
           if(obj.type == 'addPeer' )
             @removePeer(obj)  # make sure they are not in the peer list
             @addPeer(obj)     # now add and send offer.
@@ -264,7 +265,7 @@ class window.WebRTC
       constraints = @mergeConstraints(offerConstraints, sdpConstraints)
 
       peer_connection.createOffer((local_description) =>
-        console.log("Local offer description is: " + local_description)
+        console.log("Local offer description is: ", local_description)
         peer_connection.setLocalDescription(local_description
         , =>
           @send('relay',
@@ -301,7 +302,8 @@ class window.WebRTC
     peer_id = config.peer_id
     peer = @peers[peer_id]
     if( !peer )
-      #alert('could not locate peer for peer id: '+peer_id)
+      alert('could not locate peer for peer id: '+peer_id)
+      ###
       console.log('[WARN] - could not locate peer for peer id: '+peer_id)
       console.log('this must be the offer...')
       @doGetUserMedia( =>
@@ -309,6 +311,7 @@ class window.WebRTC
         # now we have the peer so lets try this again.
         @sessionDescription(config)
       )
+      ###
     else
       remote_description = config.session_description
       console.log(config.session_description)
