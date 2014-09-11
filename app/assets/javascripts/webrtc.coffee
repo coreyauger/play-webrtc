@@ -19,14 +19,15 @@ class window.WebRTC
     @peerMedia = {}
     @peers = {}
     @readyToRock = false
+    @room = ''
 
     @USE_VIDEO = true
     @webrtcSubject = @worker.subject('webrtc')
     @webRtcRelay = @webrtcSubject.subscribe( (data) =>
       #msg = data.ret[0].msg
       console.log('RECEIVE S->C\n',data)
-      if( @readyToRock && data.ret && data.ret[0] )
-        obj = data.ret[0].data
+      if( @readyToRock && data.data && data.data[0] )
+        obj = data.data[0].data
         if( obj )
           if(obj.type == 'addPeer' )
             @removePeer(obj)  # make sure they are not in the peer list
@@ -97,8 +98,11 @@ class window.WebRTC
 
   send: (op, data) ->
     #actors = Object.keys( @peers )
-    data.peer_id = @worker.jid
-    @worker.onNext({slot:'webrtc',op:op,data:data})
+    data.peer_id = @worker.uuid
+    data.room = @room
+    msg = {slot:'webrtc',op:op,data:data}
+    console.log('sending',msg)
+    @worker.onNext(msg)
 
   stop: ->
     console.log('webrtc::stop')
@@ -109,7 +113,7 @@ class window.WebRTC
     @send('relay', {
       'type':'hangup'
       'actors': peerIds,
-      'jid': @worker.jid
+      'uuid': @worker.uuid
     })
     @peers = {}
     if( @localStream? )
@@ -126,6 +130,7 @@ class window.WebRTC
 
   init: (room,offer) ->
     console.log("Initializing...")
+    @room = room
     @initWebRTCAdapter()
     @doGetUserMedia( =>
       # once the user has given us access to their
@@ -190,7 +195,7 @@ class window.WebRTC
   # in the channel you will connect directly to the other 5.
   addPeer: (config) ->
     console.log('Signaling server said to add peer:', config)
-    peer_id = config.jid;
+    peer_id = config.uuid;
     if (peer_id in @peers)
       # This could happen if the user joins multiple channels where the other peer is also in. */
       console.log("Already connected to peer " + peer_id)
@@ -270,7 +275,7 @@ class window.WebRTC
       console.log('[WARN] - could not locate peer for peer id: '+peer_id)
       console.log('this must be the offer...')
       @doGetUserMedia( =>
-        peer = @addPeer({jid:peer_id, sendOffer:false})
+        peer = @addPeer({uuid:peer_id, sendOffer:false})
         # now we have the peer so lets try this again.
         @sessionDescription(config)
       )
@@ -339,7 +344,7 @@ class window.WebRTC
   # all the peer sessions.
   removePeer: (config) ->
     console.log('Signaling server said to remove peer:', config)
-    peer_id = config.jid;
+    peer_id = config.uuid;
     if (peer_id in @peerMedia)
       @peerMedia[peer_id].remove()
     if (peer_id in @peers)
@@ -347,7 +352,7 @@ class window.WebRTC
     if( @onRemoveRemoteStream )
       @onRemoveRemoteStream(peer_id)
     delete @peers[peer_id];
-    delete @peerMedia[config.jid]
+    delete @peerMedia[config.uuid]
 
 
   doGetUserMedia: (callback) ->

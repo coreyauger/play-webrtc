@@ -49,7 +49,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   worker.webrtc().onAddRemoteStream = (uuid, video) ->
     id = $scope.peers.length+1;
     $scope.peers.push({
-      jid:uuid,
+      uuid:uuid,
       username: '',
       id: id
     })
@@ -72,7 +72,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   worker.webrtc().onAddLocalStream = (video) ->
     id = $scope.peers.length+1
     $scope.peers.push({
-      jid:worker.uuid(),
+      uuid:worker.uuid(),
       username: '',
       id: id
     })

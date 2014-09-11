@@ -82,7 +82,7 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
     "webrtc-relay" ->((json: JsValue) =>{
       log.info(s"webrtc: $json")
       val data = (json \ "data" ).as[JsObject]
-      val room = (json \ "room" ).as[String]
+      val room = (json \ "data" \ "room" ).as[String]
       // this is from another user.. to send back down socket channels..
       Future.successful(Json.arr(Json.obj( "room" -> room, "uuid" -> uuid, "data" -> data )) )
     }),
@@ -99,7 +99,7 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
         log.debug("RELAY addPeer Other %s".format(others.mkString(",") ))
         members.foreach( uid => UserActor.usermap.get(uid) match{
           case Some(ua) =>
-            UserActor.route(uuid, ua,JsonRequest("api-api",Json.obj(
+            UserActor.route(uuid, ua,JsonRequest("webrtc-relay",Json.obj(
               "room" -> room,
               "slot" -> "webrtc",
               "op" -> "relay",
@@ -162,6 +162,8 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
       log.info(s"Num sockets left $numsockets for $uuid")
       if( socketmap.isEmpty  ){
         UserActor.usermap -= uuid
+        // looping through ALL rooms to remove this member is bad !
+        UserActor.rooms.values.foreach( r => r.members -= uuid )
         log.info(s"No more sockets USER SHUTDOWN.. good bye !")
         context.stop(self)
       }
