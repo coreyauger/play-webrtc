@@ -59,12 +59,35 @@ class window.WebRTC
     @sdpConstraints = {'mandatory': {'OfferToReceiveAudio':true, 'OfferToReceiveVideo':true }}
     @pc_config = {"iceServers":
           [
-              #{url:'stun:stun.l.google.com:19302'},
-              {url:'stun:waturn.cloudapp.net'},
+              {url:'stun:stun.l.google.com:19302'},
+              {url:'stun:stun01.sipphone.com'},
+              {url:'stun:stun.ekiga.net'},
+              {url:'stun:stun.fwdnet.net'},
+              {url:'stun:stun.ideasip.com'},
+              {url:'stun:stun.iptel.org'},
+              {url:'stun:stun.rixtelecom.se'},
+              {url:'stun:stun.schlund.de'},
+              {url:'stun:stun.l.google.com:19302'},
+              {url:'stun:stun1.l.google.com:19302'},
+              {url:'stun:stun2.l.google.com:19302'},
+              {url:'stun:stun3.l.google.com:19302'},
+              {url:'stun:stun4.l.google.com:19302'},
+              {url:'stun:stunserver.org'},
+              {url:'stun:stun.softjoys.com'},
+              {url:'stun:stun.voiparound.com'},
+              {url:'stun:stun.voipbuster.com'},
+              {url:'stun:stun.voipstunt.com'},
+              {url:'stun:stun.voxgratia.org'},
+              {url:'stun:stun.xten.com'},
               {
                   url: 'turn:waturn.cloudapp.net:443?transport=tcp',
                   credential: 'walkaboutpass',
                   username: 'walkabout'
+              },
+              {
+                  url: 'turn:numb.viagenie.ca',
+                  credential: 'muazkh',
+                  username: 'webrtc@live.com'
               },
               {
                   url: 'turn:192.158.29.39:3478?transport=udp',
@@ -191,12 +214,12 @@ class window.WebRTC
     peer_connection = new RTCPeerConnection(@pc_config, {"optional": []} )
     @peers[peer_id] = peer_connection
     peer_connection.oniceconnectionstatechange = (ev) ->
+      console.log('oniceconnectionstatechange', ev)
       console.log('peer_connection.iceConnectionState == ' + peer_connection.iceConnectionState )
       if( peer_connection.iceConnectionState == 'completed' )
         console.log('WE HAVE A PEER CONNECTION....')
     peer_connection.onicecandidate = (event) =>
       if (event.candidate)
-        console.log('onicecandidate: ' + peer_connection.icegatheringstatus)
         @send('relay', {
                   'type':'iceCandidate'
                   'actors': [peer_id],
@@ -205,9 +228,6 @@ class window.WebRTC
                     'candidate': event.candidate.candidate
                   }
         })
-    peer_connection.onsignalingstatechange = (ev) ->
-      console.log('Signaling state changed to: ' + peer_connection.signalingState)
-      console.log('icegatheringstatus: ' + peer_connection.icegatheringstatus)
 
     peer_connection.onaddstream = (event) =>
       console.log("onAddStream: ", event)
@@ -275,6 +295,7 @@ class window.WebRTC
     merged.optional = merged.optional.concat(cons2.optional)
     merged
 
+
   # Peers exchange session descriptions which contains information
   # about their audio / video settings and that sort of stuff. First
   # the 'offerer' sends a description to the 'answerer' (with type
@@ -298,7 +319,6 @@ class window.WebRTC
 
       desc = new RTCSessionDescription(remote_description)
       console.log("Description Object: ", desc)
-
 
       peer.setRemoteDescription(desc, =>
         console.log("setRemoteDescription succeeded")
@@ -330,7 +350,6 @@ class window.WebRTC
 
 
 
-
   # The offerer will send a number of ICE Candidate blobs to the answerer so they
   # can begin trying to find the best path to one another on the net.
   iceCandidate: (config) ->
@@ -342,7 +361,7 @@ class window.WebRTC
       , ->
         console.log('Added the ICE Candidate.')
       , (err) ->
-        console.log('[ERROR] - ICE Candidate. ' + err)
+        console.log('[ERROR] - ICE Candidate.' + err)
       )
     else
       #alert('[ERROR] - no peer for peer_id: '+config.peer_id)
@@ -371,15 +390,15 @@ class window.WebRTC
 
 
   doGetUserMedia: (callback) ->
-    if( @localStream? )
+    if( @localStream != null)
       if( callback )
         callback()
-      return
-    constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}}
+        return
+    constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}};
     try
-      console.log("Requested access to local media with mediaConstraints:\n \"" + JSON.stringify(constraints) + "\"")
+      console.log("Requested access to local media with mediaConstraints:\n \"" + JSON.stringify(constraints) + "\"");
       getUserMedia(constraints, (stream) =>
-        @localStream = stream
+        @localStream = stream 
         local_media = if @USE_VIDEO
                         $("<video>")
                       else
