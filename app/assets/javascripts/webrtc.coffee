@@ -286,44 +286,46 @@ class window.WebRTC
       console.log('[WARN] - could not locate peer for peer id: '+peer_id)
       console.log('this must be the offer...')
       @doGetUserMedia( =>
-        peer = @addPeer({uuid:peer_id, sendOffer:false})
+        @addPeer({uuid:peer_id, sendOffer:false})
         # now we have the peer so lets try this again.
-        @sessionDescription(config)
+        @setRemoteDescription(config)
       )
     else
-      remote_description = config.session_description
-      console.log(config.session_description)
+      @setRemoteDescription(config, peer, peer_id)
 
-      desc = new RTCSessionDescription(remote_description)
-      console.log("Description Object: ", desc)
+  setRemoteDescription: (config, peer, peer_id) ->
+    remote_description = config.session_description
+    console.log(config.session_description)
 
+    desc = new RTCSessionDescription(remote_description)
+    console.log("Description Object: ", desc)
 
-      peer.setRemoteDescription(desc, =>
-        console.log("setRemoteDescription succeeded")
-        if (remote_description.type == "offer")
-          console.log("Creating answer");
-          peer.createAnswer((local_description) =>
-            console.log("Answer description is: ", local_description);
-            peer.setLocalDescription(local_description
-            , =>
-              @send('relay',
-                {
-                  'type':'sessionDescription'
-                  'actors': [peer_id],
-                  'session_description': local_description
-                }
-              )
-              console.log("Answer setLocalDescription succeeded")
-            , ->
-              alert("Answer setLocalDescription failed!")
+    peer.setRemoteDescription(desc, =>
+      console.log("setRemoteDescription succeeded")
+      if (remote_description.type == "offer")
+        console.log("Creating answer");
+        peer.createAnswer((local_description) =>
+          console.log("Answer description is: ", local_description);
+          peer.setLocalDescription(local_description
+          , =>
+            @send('relay',
+              {
+                'type':'sessionDescription'
+                'actors': [peer_id],
+                'session_description': local_description
+              }
             )
-          , (error) ->
-            console.log("Error creating answer: ", error)
-            console.log(peer)
-          ,sdpConstraints)
-      ,(error) ->
-        console.log("setRemoteDescription error: ", error)
-      )
+            console.log("Answer setLocalDescription succeeded")
+          , ->
+            alert("Answer setLocalDescription failed!")
+          )
+        , (error) ->
+          console.log("Error creating answer: ", error)
+          console.log(peer)
+        ,sdpConstraints)
+    ,(error) ->
+      console.log("setRemoteDescription error: ", error)
+    )
 
 
 
@@ -369,13 +371,13 @@ class window.WebRTC
 
 
   doGetUserMedia: (callback) ->
-    if( @localStream != null)
+    if( @localStream? )
       if( callback )
         callback()
-        return
-    constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}};
+      return
+    constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}}
     try
-      console.log("Requested access to local media with mediaConstraints:\n \"" + JSON.stringify(constraints) + "\"");
+      console.log("Requested access to local media with mediaConstraints:\n \"" + JSON.stringify(constraints) + "\"")
       getUserMedia(constraints, (stream) =>
         @localStream = stream
         local_media = if @USE_VIDEO
