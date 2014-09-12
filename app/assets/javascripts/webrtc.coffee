@@ -60,45 +60,13 @@ class window.WebRTC
     @pc_config = {"iceServers":
           [
               {url:'stun:stun.l.google.com:19302'},
-              {url:'stun:stun01.sipphone.com'},
-              {url:'stun:stun.ekiga.net'},
-              {url:'stun:stun.fwdnet.net'},
-              {url:'stun:stun.ideasip.com'},
-              {url:'stun:stun.iptel.org'},
-              {url:'stun:stun.rixtelecom.se'},
-              {url:'stun:stun.schlund.de'},
-              {url:'stun:stun.l.google.com:19302'},
-              {url:'stun:stun1.l.google.com:19302'},
-              {url:'stun:stun2.l.google.com:19302'},
-              {url:'stun:stun3.l.google.com:19302'},
-              {url:'stun:stun4.l.google.com:19302'},
-              {url:'stun:stunserver.org'},
-              {url:'stun:stun.softjoys.com'},
-              {url:'stun:stun.voiparound.com'},
-              {url:'stun:stun.voipbuster.com'},
-              {url:'stun:stun.voipstunt.com'},
-              {url:'stun:stun.voxgratia.org'},
-              {url:'stun:stun.xten.com'},
+             # {url:'stun:137.135.63.9'},
               {
-                  url: 'turn:waturn.cloudapp.net:443?transport=tcp',
+                  url: 'turn:waturn.cloudapp.net:3478?transport=tcp',
                   credential: 'walkaboutpass',
                   username: 'walkabout'
-              },
-              {
-                  url: 'turn:numb.viagenie.ca',
-                  credential: 'muazkh',
-                  username: 'webrtc@live.com'
-              },
-              {
-                  url: 'turn:192.158.29.39:3478?transport=udp',
-                  credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                  username: '28224511:1379330808'
-              },
-              {
-                  url: 'turn:192.158.29.39:3478?transport=tcp',
-                  credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                  username: '28224511:1379330808'
-              }]}
+              }
+          ]}
   clog: (str) ->
     if (debug)
       window.console.log(str)
@@ -211,7 +179,7 @@ class window.WebRTC
       console.log("Already connected to peer " + peer_id)
       return
 
-    peer_connection = new RTCPeerConnection(@pc_config, {"optional": []} )
+    peer_connection = new RTCPeerConnection(@pc_config)
     @peers[peer_id] = peer_connection
     peer_connection.oniceconnectionstatechange = (ev) ->
       console.log('oniceconnectionstatechange', ev)
@@ -317,7 +285,9 @@ class window.WebRTC
       remote_description = config.session_description
       console.log(config.session_description)
 
-      desc = new RTCSessionDescription(remote_description)
+      desc = new RTCSessionDescription(remote_description,{
+        "optional": [{"DtlsSrtpKeyAgreement": true}]
+      })
       console.log("Description Object: ", desc)
 
       peer.setRemoteDescription(desc, =>
