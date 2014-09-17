@@ -116,6 +116,6 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
 
 webrtcControllers.factory("worker",['$rootScope','$q', ($rootScope,$q) ->
-  worker = new window.SocketWorker(window._uuid, 'username', parseInt(window._chatid), $rootScope)
+  worker = new window.SocketWorker(window._uuid, 'username')
   worker.controllerOps
 ])

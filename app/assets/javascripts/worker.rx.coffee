@@ -4,7 +4,6 @@
 window.WorkerData =
   UUID: null
   name: ''
-  currentChatId: 0
   providers: []
   Worker: null
   Notification:
@@ -22,14 +21,14 @@ class CometSocket
     console.log("CometSocket calling create")
     @$frame = $('#comet')
     if( this.$frame.size() == 0 )
-      #$('body').append('<iframe id="comet" src="http://'+domain+':9009/ws/comet/'+uuid+'/'+token+'/'+WorkerData.currentChatId+'" style="visibility: hidden"></iframe>')
-      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+uuid+'/'+WorkerData.currentChatId+'" style="visibility: hidden"></iframe>')
+      #$('body').append('<iframe id="comet" src="http://'+domain+':9009/ws/comet/'+uuid+'/'+token+'" style="visibility: hidden"></iframe>')
+      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+uuid+'" style="visibility: hidden"></iframe>')
       @.$frame = $('#comet')
   send: (data) ->
     console.log("CometSocket SEND")
     data.time = new Date().getTime()
     data.rand = Math.random()
-    $.post( "/ws/comet/send/"+WorkerData.currentChatId, { data: data }
+    $.post( "/ws/comet/send/", { data: data }
       ,->
         console.log('comet send success')
       , ->
@@ -39,10 +38,9 @@ class CometSocket
 #
 # Worker Class
 class window.NGWorker
-  constructor: (uuid, username, chatid, $rootScope, domain) ->
+  constructor: (uuid, username, domain) ->
     @uuid = uuid
     @domain = domain || self.location.hostname
-    @$rootScope = $rootScope
     @username = username
     @isConnected = false
     @retrySocket = true
@@ -55,8 +53,6 @@ class window.NGWorker
       subject: (subject) => @subject(subject)
       onNext: (data) => @onNext(data)
       webrtc: => @webrtc
-      broadcast: (evn, args) =>
-        @$rootScope.$broadcast(evn, args)
       verifyConnection: =>
         if( !@isConnected && @retrySocket)
           @connect()
@@ -67,10 +63,6 @@ class window.NGWorker
     @isConnected = false
     @retrySocket = true
     console.log('ws: worker socket CLOSED.  trying to reconnect')
-    @$rootScope.page.error = 'Connection problem.  Standby while we try to reconnect.'
-    setTimeout(=>
-      @$rootScope.$apply()
-    ,0)
     @retryTimeout = @retryTimeout * 2
     if( @onSocketClose? )
       @onSocketClose()
@@ -98,9 +90,6 @@ class window.NGWorker
       @wsSubject.filter((s) ->s.slot == subject ).subscribe(@subjects[subject])
     @subjects[subject]
 
-  broadcast: (evn, args) ->
-    @$rootScope.$broadcast(evn, args)
-
 # end of worker class...
 
 
@@ -109,8 +98,8 @@ class window.NGWorker
 #
 # WalkaboutSocketWorker
 class window.SocketWorker extends NGWorker
-  constructor: (uuid, username, token, chatid, $rootScope, domain) ->
-    super(uuid, username, token, chatid, $rootScope, domain)
+  constructor: (uuid, username, token, domain) ->
+    super(uuid, username, token, domain)
   connect: ->
     if( !@isConnected && @retrySocket)
       @retrySocket = false
@@ -127,17 +116,13 @@ class window.SocketWorker extends NGWorker
       else
         try
           # NOTE: you should always use wss .. regular ws connections will be cached and proxied and therefor be messed up in the real world
-          #@ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+'/'+WorkerData.currentChatId);
-          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@uuid+'/'+WorkerData.currentChatId);
+          #@ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+);
+          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@uuid)
         catch e
           @socketRetry()
 
       @ws.onopen = (evt) =>
         console.log('worker websocket CONNECT.')
-        @$rootScope.page.error = ''   #clear any errors
-        setTimeout(=>
-          @$rootScope.$apply()
-        ,0)
         @retryTimeout = 5000
         setTimeout(=>
           @isConnected = true

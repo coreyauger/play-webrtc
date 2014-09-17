@@ -6,21 +6,182 @@
 </head>
 <body>
 
+<div>
+<h2>Overview</h2>
+<p>WebRTC is awesome!  But if you are here you already know that.  Just to review webRTC offers voice video and data transmission directly between peers that support the protocol.  This include modern browsers (chrome, FF, opera) as well as open source code that include builds for android, ios, linux, mac, and windows.</p>
 
-Tutorial
-The tutorial for a template is in a tutorial/index.html file. Each section of the tutorial must be in a <div> tag that is inside the <body> tag. Each section must have a single <h2> tag that contains the section's title. The tutorial can provide shortcut links to places in Activator by using an anchor link (#) and the shortcut class, like:
+<p>To get a good understanding of how webRTC works you should take a look at the following article which covers everything in great detail:
+<a href="http://www.html5rocks.com/en/tutorials/webrtc/infrastructure/">http://www.html5rocks.com/en/tutorials/webrtc/infrastructure/</a></p>
 
-    <a href="#code/tutorial/index.html" class="shortcut">/tutorial/index.html</a>
-    Code blocks can use <pre><code></code></pre> tags, like:
+<p>The rest of this tutorial is dedicated to the setup and integration of play-webrtc components.</p>
+</div>
 
-<pre><code>println("hello, Scala!")
-    val foo = "Bar"</code></pre>
-    In-line code can use just the <code></code> tag, like:
 
-    The <code>val foo = "Bar"</code> statement sets <code>foo</code> to <code>Bar</code>
-    Images can be embedded by putting them in the tutorial directory and using a relative URL to the image, like:
+<div>
+<h2>What is play-webrtc</h2>
+<p>Simply put play-webrtc is an out of the box relay server that uses reactive websockets with a comet fallback.  It includes code to setup and relay data necessary for setting up a webRTC connection between 2 or more peers.</p>
 
-    <img src="tutorial/tutorial.png">
+<h4>Components include:</h4>
+    <ul>
+        <li>Play front end to render the web application.</li>
+        <li>Coffeescript code to connect to the reactive websocket and negotiate sending data between peers.</li>
+        <li>Iteratee websocket connection.</li>
+        <li>Akka actor system for message passing and backend logic.</li>
+    </ul>
+
+<p>These component serve as a demonstration and starting point for integrating webRTC and possibly other api requests into your own application.</p>
+
+<h4>Additional things you will need:</h4>
+<p>In a production environment you will want to configure and run your own TURN server.  For information on the setup and configuration of TURN please refer to the following documentation.
+<a href="https://code.google.com/p/rfc5766-turn-server/wiki/turnserver">https://code.google.com/p/rfc5766-turn-server/wiki/turnserver</a></p>
+
+<strong>A Note on websockets:</strong>
+<p>In a production environment you will want your websocket to be a secure connection.  The reasons for this go beyond just encrypting your data.  Websocket data that is now encrypted will fall victim to routers and proxies that have “smart” http caching policies.  This will ultimately render your websocket useless in these environments.  The solution is to use wss:// and no ws://</p>
+</div>
+
+<div>
+    <h2>Getting Started</h2>
+
+<p>Whether you use our angular JS code or want to integrate with your own, you will need to include 2 javascript files and their dependencies.</p>
+
+<strong>Using our example page</strong>
+<p>Take a look at what gets included on:<br/>
+    <code>/views/index.scala.html</code><br/>
+    <code>/views/main.scala.html</code><br/>
+</p>
+
+<strong>Integration with your own</strong>
+<p>The first dependency is on RxJS.  If you have not heard of reactive extensions for javascript… you are missing out.  You need to head on over to this page https://github.com/Reactive-Extensions/RxJS  and take a look at what they provide.  Here are the 2 include that you require.</p>
+
+    <pre>
+
+&lt;script src="/javascripts/ext/rxjs/2.2.20/rx.lite.compat.min.js""&gt;&lt;/script&gt;
+&lt;script src="/javascripts/ext/rxjs/2.2.20/rx.async.min.js""&gt;&lt;/script&gt;
+    </pre>
+
+<p>Once you have these dependencies added you can add the 2 required js files.</p>
+
+
+    <pre>
+&lt;script src='/javascripts/webrtc.js")' type="text/javascript"&gt;&lt;/script&gt;
+&lt;script src='/javascripts/worker.rx.js")' type="text/javascript"&gt;&lt;/script&gt;
+        </pre>
+
+<strong>Initializing</strong>
+<p>Next thing we need to do is initialize the Websocket Rx worker class.  This can be seen in the controller.coffee file where we create a factory worker.</p>
+
+<pre>
+        <code>
+webrtcControllers.factory("worker",['$rootScope','$q', ($rootScope,$q) ->
+    worker = new window.SocketWorker(window._uuid, 'username')
+    worker.controllerOps
+])
+            </code>
+    </pre>
+
+<p>Notice that we pass in some form of a user id (_uuid) and a username to the SocketWorker.  The line below that is angular specific and simple exposes some operations from the worker.  In a non angular environment you can simple initialize the class like so:</p>
+
+    <pre>
+        <code>
+worker = new window.SocketWorker(window._uuid, 'username')
+</code>
+        </pre>
+
+<strong>Handling Events</strong>
+<p>Next you will want to setup the common webrtc event handlers.  The 3 most important ones being the following:</p>
+<pre>
+        <code>
+    onAddRemoteStream
+    onRemoveRemoteStream
+    onAddLocalStream
+</code>
+    </pre>
+
+<p>These let you know when someone has joined as well as when your local video feed is ready.  The methods simply hand you a video object that you can insert into the DOM at whatever location you desire.  In our angular code this looks like the following.</p>
+
+    <pre>
+        <code>
+
+worker.webrtc().onAddRemoteStream = (uuid, video) ->
+    id = $scope.peers.length+1;
+    $scope.peers.push({
+        uuid:uuid,
+        username: '',
+        id: id
+    })
+    jidToPeerId[uuid] = id
+    setTimeout(->
+        $scope.$apply()
+        $('#video'+id).append(video)
+    ,0)
+
+
+worker.webrtc().onRemoveRemoteStream = (uuid) ->
+    $scope.peers = $scope.peers.filter((p) ->
+        p.uuid != uuid
+    )
+    setTimeout(->
+        $scope.$apply()
+    ,0)
+
+
+worker.webrtc().onAddLocalStream = (video) ->
+    id = $scope.peers.length+1
+    $scope.peers.push({
+        uuid:worker.uuid(),
+        username: '',
+        id: id
+    })
+    jidToPeerId[worker.uuid()] = id
+    setTimeout( ->
+        $scope.$apply()
+        $('#video'+id).append(video)
+    ,0)
+
+</code>
+        </pre>
+
+<p>Note that in a non angular setting your would simply use</p>
+
+    <pre>
+        <code>
+worker.webrtc.onAddRemoteStream = function(uuid, video){
+    // .. do stuff with video .. for eg:
+    $(‘body’).append(video);
+}
+            </code>
+        </pre>
+
+
+<strong>Starting the Session</strong>
+<p>We first subscribe to our websocket stream to receive events about the appropriate message that we are interested in.  The “room” category and the “join” event.</p>
+
+    <pre>
+        <code>
+roomSubject = worker.subject('room')
+roomSub = roomSubject.filter( (r) -> r.op == 'join' ).subscribe( (ret) ->
+    console.log('ret.data.members',ret.data.members)
+    worker.webrtc().init($scope.room, true)
+)
+</code>
+        </pre>
+
+<p>This simply will initialize a webrtc session with anyone that joins the room.</p>
+
+<p>All that is left to do now is announce that we have joined the room.</p>
+
+    <pre>
+        <code>
+worker.onNext({slot:'room',op:'join',data:{name: $scope.room}})
+</code>
+        </pre>
+
+
+</div>
+
+
+
+
 
 
 </body>

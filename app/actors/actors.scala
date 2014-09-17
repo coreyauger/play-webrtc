@@ -48,7 +48,7 @@ class Room(val name:String){
 }
 
 
-class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorLogging{
+class UserActor(val uuid: String) extends Actor with ActorLogging{
 
   implicit val timeout = Timeout(3 second)
   log.info(s"UserActor create: $uuid")
@@ -90,7 +90,7 @@ class UserActor(val uuid: String, val chatid: String ) extends Actor with ActorL
       log.info(s"webrtc: $json")
       val room = (json \ "data" \ "room" ).as[String]
       //val offer = (json \ "data" \ "sendOffer" ).as[Boolean]
-      log.debug(s"WEBRTC::JOIN chatid $room")
+      log.debug(s"WEBRTC::JOIN room $room")
       // The Joiner is ALWAYS the initiator for the new connections to the peers...
       // TODO: We are sending to more accounts then we need to by getting a list of ALL providers in the chat
         val members = UserActor.rooms(room).members
@@ -195,8 +195,6 @@ object UserActor{
       println("CALLING ACTORS *****************************")
       println(s"WebSocketActor::actors $actorList")
       actorList.foreach( a => {
-        val chatid = (jr.json \ "data" \ "chatid").asOpt[Long]
-        println(chatid)
         findUserActor(a) match{
           case Some(actor) =>
             println("found actor... ")
@@ -219,16 +217,16 @@ object UserActor{
 
 
 // TODO: simplify this with an akka Agent
-case class GetUserActor(uuid: String, chatid: String)
+case class GetUserActor(uuid: String)
 class LockActor extends Actor{
 
   def receive = {
-    case GetUserActor(uuid, chatid) =>
+    case GetUserActor(uuid) =>
       val actor = UserActor.usermap.get(uuid) match{
         case Some(actor) => actor
         case None =>
           // TODO: this is a hacky way to get psudeo actors unique to a chat
-          val ar = Akka.system.actorOf(Props(new UserActor(uuid,chatid)),uuid)
+          val ar = Akka.system.actorOf(Props(new UserActor(uuid)),uuid)
           UserActor.usermap += uuid -> ar
           ar
       }
@@ -237,7 +235,7 @@ class LockActor extends Actor{
 }
 
 // (CA) - One of possibly many web-socket connections (1 per device)
-class WebSocketActor(val uuid: String, val chatid: String = "0", val isComet: Boolean = false) extends Actor with ActorLogging{
+class WebSocketActor(val uuid: String, val isComet: Boolean = false) extends Actor with ActorLogging{
 
   // TODO: consider naming this actor by the ip and port that is in use on the client ?
 
@@ -248,7 +246,7 @@ class WebSocketActor(val uuid: String, val chatid: String = "0", val isComet: Bo
   val userActor = {
     // TODO: this is where we will locate the "single" user actor on the cluster...
     implicit val timeout =  Timeout(3 seconds)
-    UserActor.lockActor ? GetUserActor(uuid, chatid)
+    UserActor.lockActor ? GetUserActor(uuid)
   }
 
   def receive = {
@@ -303,9 +301,9 @@ object WebSocketHandler {
     }
   }
 
-  def connect(uuid: String, chatid: String):scala.concurrent.Future[(Iteratee[JsValue,_],Enumerator[JsValue])] = {
+  def connect(uuid: String):scala.concurrent.Future[(Iteratee[JsValue,_],Enumerator[JsValue])] = {
     println(s"WebSocketHandler: $uuid")
-    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid, chatid)))
+    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid)))
     //connections = connections :+ wsActor
     (wsActor ? Connect(uuid)).map {
       case NowConnected(enumerator) =>
@@ -335,9 +333,9 @@ object WebSocketHandler {
 
   }
 
-  def connectComet(uuid: String, chatid: String) = {
+  def connectComet(uuid: String) = {
     // TODO: comet user actors never die .. since there is no disconnect message that is sent
-    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid, chatid, true)))
+    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid, true)))
     println("Sensing Connect to CometActor")
     (wsActor ? Connect(uuid)).map {
       case NowConnected(enumerator) =>

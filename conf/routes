@@ -6,13 +6,11 @@
 GET         /                                   controllers.Application.index
 
 # Websocket API
-GET         /api/:uuid/                         controllers.Application.api(uuid, chatid="0")
-GET         /api/:uuid/:chatid                  controllers.Application.api(uuid, chatid)
+GET         /api/:uuid                          controllers.Application.api(uuid)
 
 # Web service
-GET         /ws/comet/:uuid/:chatid             controllers.Application.comet(uuid, chatid)
-POST        /ws/comet/send/:uuid                controllers.Application.cometSend(uuid, chatid = "0")
-POST        /ws/comet/send/:uuid/:chatid        controllers.Application.cometSend(uuid, chatid)
+GET         /ws/comet/:uuid                     controllers.Application.comet(uuid)
+POST        /ws/comet/send/:uuid                controllers.Application.cometSend(uuid)
 
 
 # Map static resources from the /public folder to the /assets URL path
