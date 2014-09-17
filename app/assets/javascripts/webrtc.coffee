@@ -288,8 +288,6 @@ class window.WebRTC
       desc = new RTCSessionDescription(remote_description,{
         "optional": [{"DtlsSrtpKeyAgreement": true}]
       })
-      desc = new RTCSessionDescription(remote_description)
-
 
       console.log("Description Object: ", desc)
 
