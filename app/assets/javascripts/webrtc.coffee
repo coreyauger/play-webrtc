@@ -16,10 +16,10 @@ class window.WebRTC
     'mandatory': {
       'OfferToReceiveAudio': true,
       'OfferToReceiveVideo': true
-    },
-    'optional': [{
-      'VoiceActivityDetection': false
-    }]
+    }
+    #'optional': [{
+    #  'VoiceActivityDetection': false
+    #}]
   }
 
   constructor: (worker) ->
@@ -227,13 +227,13 @@ class window.WebRTC
     console.log('config',config)
     if (config.sendOffer)
       console.log("Creating RTC offer to " + peer_id)
-      offerConstraints = {
-        "optional": [
-          { "OfferToReceiveAudio": true },
-          { "OfferToReceiveVideo": true },
-        ]
-      }
-      constraints = @mergeConstraints(offerConstraints, sdpConstraints)
+      #offerConstraints = {
+      #  "optional": [
+      #    { "OfferToReceiveAudio": true },
+      #    { "OfferToReceiveVideo": true },
+      #  ]
+      #}
+      #constraints = @mergeConstraints(offerConstraints, sdpConstraints)
 
       peer_connection.createOffer((local_description) =>
         console.log("Local offer description is: ", local_description)
@@ -253,7 +253,8 @@ class window.WebRTC
         )
       , (error) ->
         console.log("Error sending offer: "+error)
-      ,constraints)
+      , sdpConstraints)
+      #,constraints)
     peer_connection
 
   mergeConstraints: (cons1, cons2) ->
