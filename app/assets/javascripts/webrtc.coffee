@@ -289,6 +289,9 @@ class window.WebRTC
       desc = new RTCSessionDescription(remote_description,{
         "optional": [{"DtlsSrtpKeyAgreement": true}]
       })
+      desc = new RTCSessionDescription(remote_description)
+
+
       console.log("Description Object: ", desc)
 
       peer.setRemoteDescription(desc, =>
@@ -365,7 +368,8 @@ class window.WebRTC
       if( callback )
         callback()
         return
-    constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}};
+    #constraints = {"audio": true, "video": {"mandatory": {}, "optional": []}};
+    constraints = {"audio": true, "video": true};
     try
       console.log("Requested access to local media with mediaConstraints:\n \"" + JSON.stringify(constraints) + "\"");
       getUserMedia(constraints, (stream) =>
