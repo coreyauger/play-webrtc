@@ -164,6 +164,7 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
         UserActor.usermap -= uuid
         // looping through ALL rooms to remove this member is bad !
         UserActor.rooms.values.foreach( r => r.members -= uuid )
+        UserActor.rooms = UserActor.rooms.filter( _._2.members.size > 0 )
         log.info(s"No more sockets USER SHUTDOWN.. good bye !")
         context.stop(self)
       }
