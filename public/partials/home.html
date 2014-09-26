@@ -1,4 +1,6 @@
+<div class="container">
 
+<!--
     <div class="jumbotron detect">
         <h2 ng-show="detect.isWebRTCSupported" class="supported">WebRTC Supported <span class="glyphicon glyphicon-ok"></span></h2>
         <h2 ng-show="!detect.isWebRTCSupported" class="fail">WebRTC NOT Supported <span class="glyphicon glyphicon-remove"></span></h2>
@@ -11,7 +13,7 @@
             <li class="list-group-item">Data Channel (RTP) <span class="value">{{detect.isRtpDataChannelsSupported}}</span></li>
         </ul>
     </div>
-
+-->
 
 
     <div class="panel panel-default row">
@@ -23,10 +25,9 @@
             <div class="input-group">
                 <input type="text" ng-model="room" placeholder="Name of chat room .." class="form-control">
                 <span class="input-group-btn">
-                    <button class="btn btn-default" ng-click="joinRoom(room)" type="button">Join!</button>
+                    <button class="btn btn-primary" ng-click="joinRoom(room)" type="button">Join!</button>
                 </span>
             </div><!-- /input-group -->
-
         </div>
     </div>
 
@@ -46,3 +47,4 @@
         </div>
     </div>
 
+</div>

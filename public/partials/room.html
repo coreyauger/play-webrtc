@@ -2,31 +2,65 @@
 
 
 
-<div class="row">
-    <nav class="navbar navbar-default navbar-static-top" role="navigation">
-        <ul class="nav navbar-nav navbar-right">
-            <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
-            <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
-            <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
-            <li style="width: 25px;">&nbsp;</li>
-        </ul>
-    </nav>
-</div>
+<div style="padding: 10px 15px;" class="row">
 
 
 
-<div style="padding: 10px 15px;" class="cols">
+    <div class="col-sm-12 col-sm-3 col-md-2 rtc-video panel panel-default pin">
+        <div class="panel-heading">Peer {{local.uuid}}</div>
+        <div class="panel-body center">
+            <div id="video{{local.id}}" class="video-holder">
+            </div>
+            <nav class="cntrls navbar navbar-default navbar-static-top" role="navigation">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
+                    <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
+                    <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
+                    <li style="width: 25px;">&nbsp;</li>
+                </ul>
+            </nav>
+        </div>
+    </div>
 
-
-    <div class="panel panel-default pin" ng-repeat="peer in peers">
+    <div class="col-sm-12 col-sm-5 col-md-5  rtc-video panel panel-default pin" ng-repeat="peer in peers">
         <div class="panel-heading">Peer {{peer.uuid}}</div>
         <div class="panel-body center">
             <div id="video{{peer.id}}" class="video-holder">
             </div>
+            <nav class="cntrls navbar navbar-default navbar-static-top" role="navigation">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
+                    <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
+                    <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
+                    <li style="width: 25px;">&nbsp;</li>
+                </ul>
+            </nav>
         </div>
     </div>
 
+
 </div>
+
+<button class="btn btn-primary chat" ng-click="toggleChat()">
+    <span class="glyphicon glyphicon-pencil"></span>
+    CHAT
+</button>
+
+
+<div class="rtc-txt panel panel-default row" ng-class="{active:chat.active}">
+    <div class="panel-body center">
+        <div class="history">
+
+        </div>
+        <div class="input-group">
+            <input type="text" ng-model="room" placeholder="Name of chat room .." class="form-control">
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" ng-click="" type="button">Send!</button>
+                </span>
+        </div><!-- /input-group -->
+    </div>
+</div>
+
 
 
 

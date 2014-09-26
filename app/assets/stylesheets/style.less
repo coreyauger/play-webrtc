@@ -1,6 +1,103 @@
 
 html{
   body{
+    background: url(/assets/images/bg2.jpg);
+    background-size: cover;
+    color: #EEE;
+    footer,
+    .navbar-default{
+      background-color: rgba(0,0,0,0.6);
+      border-top: 1px solid #666;
+      border-bottom: 1px solid #666;
+      border-right: 0px;
+      border-left: 0px;
+    }
+    .panel-body{
+      padding: 10px 0px;
+    }
+    .input-group{
+      padding: 10px 20px;
+    }
+    .navbar-default .navbar-nav>li>a{
+      color: #ccc;
+      font-weight: bold;
+    }
+    .navbar-default .navbar-nav>li.active>a{
+      background-color: #000;
+      color: #fff;
+      font-weight: bold;
+    }
+    .chat{
+      position: absolute;
+      bottom: 70px;
+      right: 70px;
+      font-size: 30px;
+    }
+    .thumbnail,
+    .panel-default{
+      background-color: rgba(0,0,0,0.6);
+      border: 1px solid #666;
+      .panel-heading{
+        background-color: #222;
+        color: #FFF;
+      }
+      box-shadow: 0px 5px 7px rgba(200,200,200, 0.4);
+    }
+    .rtc-video{
+      margin: 20px;
+      padding: 0px;
+      video{
+        width: 80%;
+        box-shadow: 3px 3px 7px rgba(200,200,200, 0.4);
+
+      }
+    }
+
+    .rtc-video:hover{
+      .cntrls{
+        opacity: 1;
+      }
+    }
+    .rtc-txt{
+      transition: all .5s ease-in;
+      -webkit-transition: all .5s ease-in;
+      -moz-transition: all .5s ease-in;
+      -o-transition: all .5s ease-in;
+      position: absolute;
+      width: 80%;
+      left: -4000px;
+      bottom: 100px;
+      padding: 20px;
+      height: 30%;
+      max-height: 300px;
+
+      .panel-body {
+        height: 100%;
+        .history {
+          overflow: scroll;
+          height: 80%;
+          overflow-x: hidden;
+        }
+
+      }
+    }
+    .rtc-txt.active{
+      left: 50px;
+    }
+
+    .cntrls{
+      opacity: 0;
+      transition: all .6s ease-in;
+      -webkit-transition: all .6s ease-in;
+      -moz-transition: all .6s ease-in;
+      -o-transition: all .6s ease-in;
+    }
+    footer{
+      position: fixed;
+      bottom: 0px;
+      width: 100%;
+
+    }
     .header-logo{
       height: 32px;
     }
@@ -18,8 +115,6 @@ html{
       }
     }
     .detect{
-      /*background: url(/assets/images/bg.jpg);*/
-      background-size: cover;
       .value{
         float: right;
         font-size: 16px;

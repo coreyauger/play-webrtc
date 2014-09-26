@@ -38,6 +38,8 @@ webrtcApp.run(($rootScope, $location, worker, $modal, $sce) ->
   $rootScope.webrtc =
     support: DetectRTC
 
+  $rootScope.detect = window.DetectRTC
+
   window.addEventListener('online',  ->
     $rootScope.page.online = true
     $rootScope.page.error = ''

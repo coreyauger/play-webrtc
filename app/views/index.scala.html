@@ -32,16 +32,18 @@
             <ul class="nav navbar-nav pull-right">
                 <li class="active"><a href="#/home">Home</a></li>
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Rooms <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a ng-click="newAppModal()" href="javascript: ;">Create New</a></li>
-                        <li class="divider"></li>
-                        <li ng-repeat="r in roomList"><a ng-href="#/room/{{r.name}}">{{r.name}}</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#/home">See All</a></li>
+                    <a href="#" class="dropdown-toggle" ng-show="detect.isWebRTCSupported" class="supported">WebRTC Supported <span class="glyphicon glyphicon-ok"></span></a>
+                    <a href="#" class="dropdown-toggle" ng-show="!detect.isWebRTCSupported" class="fail">WebRTC NOT Supported <span class="glyphicon glyphicon-remove"></span></a>
+                    <ul class="dropdown-menu detect">
+                        <li>Has Microphone <span class="value">{{detect.hasMicrophone}}</span></li>
+                        <li>Has Webcam <span class="value">{{detect.hasWebcam}}</span></li>
+                        <li>Audio Context <span class="value">{{detect.isAudioContextSupported}}</span></li>
+                        <li>Screen Capture <span class="value">{{detect.isScreenCapturingSupported}}</span></li>
+                        <li>Data Channel (SCTP) <span class="value">{{detect.isSctpDataChannelsSupported}}</span></li>
+                        <li>Data Channel (RTP) <span class="value">{{detect.isRtpDataChannelsSupported}}</span></li>
                     </ul>
                 </li>
-                <li><a href="#/docs">Docs</a></li>
+                <li><a target="_blank" href="https://github.com/walkaboutim/play-webrtc">Docs</a></li>
 
             </ul>
 
@@ -50,10 +52,7 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div ng-view></div>
-    </div>
-
+    <div ng-view></div>
 
     <footer>
         <nav class="navbar navbar-default navbar-static-bottom" style="margin-bottom: 0px;">

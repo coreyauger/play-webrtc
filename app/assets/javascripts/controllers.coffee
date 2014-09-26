@@ -13,7 +13,6 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     setTimeout(->
       $scope.$apply()
     ,0)
-  $scope.detect = window.DetectRTC
 
   worker.onNext({slot:'room', op:'list',data:{}})
 
@@ -23,7 +22,17 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   $scope.room = $routeParams.room
   $scope.memberList = []
   $scope.peers = []
+  $scope.local = {}
   jidToPeerId = {}
+  $scope.chat =
+    active: false
+
+  $scope.toggleChat = ->
+    $scope.chat.active = !$scope.chat.active;
+    setTimeout(->
+      $scope.$apply()
+    ,0)
+
 
   $scope.webrtc =
     muteAudio: false
@@ -49,8 +58,9 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   worker.webrtc().onAddRemoteStream = (uuid, video) ->
     id = $scope.peers.length+1;
     $scope.peers.push({
-      uuid:uuid,
-      username: '',
+      uuid:uuid
+      local: false
+      username: ''
       id: id
     })
     jidToPeerId[uuid] = id
@@ -71,11 +81,13 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
   worker.webrtc().onAddLocalStream = (video) ->
     id = $scope.peers.length+1
-    $scope.peers.push({
-      uuid:worker.uuid(),
-      username: '',
+    $scope.local =
+      uuid:worker.uuid()
+      username: ''
+      local: true
       id: id
-    })
+
+    $scope.peers.push($scope.local)
     jidToPeerId[worker.uuid()] = id
     setTimeout( ->
       $scope.$apply()
