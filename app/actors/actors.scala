@@ -54,23 +54,42 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
   log.info(s"UserActor create: $uuid")
   var socketmap = Map[String,(Concurrent.Channel[JsValue], Boolean)]()
 
-
   val dateFormatUtc: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
   dateFormatUtc.setTimeZone(TimeZone.getTimeZone("UTC"))
 
 
+  def pushRoomList = {
+    socketmap.values.foreach{
+      case (soc, isComet) =>
+        soc.push(Json.obj(
+          "slot" -> "room",
+          "op" -> "list",
+          "data" -> Json.obj(
+            "rooms" -> UserActor.rooms.values.map(_.toJson)
+          )
+        ))
+        // (CA) - this is super lame...
+        // we need to pad come request.. and turn off gzip to all for each request to be pushed more info on my blog.
+        if (isComet)
+          soc.push(Json.obj("padding" -> Array.fill[Char](25 * 1024)(' ').mkString))
+    }
+  }
+
   lazy val ops = Map[String, ((JsValue) => Future[JsValue])](
     "room-join" -> ((json: JsValue) =>{
       val name = (json \ "data" \ "name").as[String]
-      // NOTE: this is not syncronized ... you would want something similar to LockActor for this.
+
+      // NOTE: this is not thread safe ... you would want something similar to LockActor for this.
       UserActor.rooms.get(name) match {
         case Some(room) =>
           room.members += uuid
+          pushRoomList
           Future.successful(room.toJson)
         case None =>
           val r = new Room(name)
           r.members += uuid
           UserActor.rooms += (name -> r)
+          pushRoomList
           Future.successful(r.toJson)
       }
     }),
