@@ -33,7 +33,6 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
       $scope.$apply()
     ,0)
 
-
   $scope.webrtc =
     muteAudio: false
     muteVideo: false
@@ -53,7 +52,6 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
       setTimeout( ->
         $scope.$apply()
       ,0)
-
 
   worker.webrtc().onAddRemoteStream = (uuid, video) ->
     id = $scope.peers.length+1;
@@ -86,22 +84,20 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
       username: ''
       local: true
       id: id
-
+    ###
     $scope.peers.push($scope.local)
     jidToPeerId[worker.uuid()] = id
     setTimeout( ->
       $scope.$apply()
       $('#video'+id).append(video)
     ,0)
-
-
+    ###
 
   roomSubject = worker.subject('room')
   roomSub = roomSubject.filter( (r) -> r.op == 'join' ).subscribe( (ret) ->
     console.log('ret.data.members',ret.data.members)
     worker.webrtc().init($scope.room, true)
   )
-
 
   worker.onNext({slot:'room', op:'list',data:{}})
   worker.onNext({slot:'room',op:'join',data:{name: $scope.room}})

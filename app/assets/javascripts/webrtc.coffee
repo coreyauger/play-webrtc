@@ -181,6 +181,22 @@ class window.WebRTC
 
     peer_connection = new RTCPeerConnection(@pc_config)
     @peers[peer_id] = peer_connection
+
+    dataChannelOptions =
+      ordered: true # do not guarantee order
+      maxRetransmitTime: 3000 # in milliseconds
+
+    # Add a data channel connection...
+    @peers[peer_id].dataChannel = peer_connection.createDataChannel("walkaboutDataChannel", dataChannelOptions);
+    @peers[peer_id].dataChannel.onerror = (error) ->
+      console.log("Data Channel Error:", error)
+    @peers[peer_id].dataChannel.onmessage =  (event) ->
+      console.log("Got Data Channel Message:", event.data)
+    @peers[peer_id].dataChannel.onopen = =>
+      @peers[peer_id].dataChannel.send("Hello World!")
+    @peers[peer_id].dataChannel.onclose = ->
+      console.log("The Data Channel is Closed")
+
     peer_connection.oniceconnectionstatechange = (ev) ->
       console.log('oniceconnectionstatechange', ev)
       console.log('peer_connection.iceConnectionState == ' + peer_connection.iceConnectionState )
