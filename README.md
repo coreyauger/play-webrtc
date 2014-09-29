@@ -88,7 +88,7 @@ onAddLocalStream
 These let you know when someone has joined as well as when your local video feed is ready.  The methods simply hand you a video object that you can insert into the DOM at whatever location you desire.  In our angular code this looks like the following.
 
 ```coffee
- worker.webrtc().onAddRemoteStream = (uuid, video) ->
+ worker.webrtc().onAddRemoteStream = (uuid, video, dataChannel) ->
     id = $scope.peers.length+1;
     $scope.peers.push({
       uuid:uuid,
