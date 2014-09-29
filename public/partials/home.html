@@ -1,19 +1,22 @@
 <div class="container">
 
-<!--
-    <div class="jumbotron detect">
-        <h2 ng-show="detect.isWebRTCSupported" class="supported">WebRTC Supported <span class="glyphicon glyphicon-ok"></span></h2>
-        <h2 ng-show="!detect.isWebRTCSupported" class="fail">WebRTC NOT Supported <span class="glyphicon glyphicon-remove"></span></h2>
-        <ul class="list-group ">
-            <li class="list-group-item">Has Microphone <span class="value">{{detect.hasMicrophone}}</span></li>
-            <li class="list-group-item">Has Webcam <span class="value">{{detect.hasWebcam}}</span></li>
-            <li class="list-group-item">Audio Context <span class="value">{{detect.isAudioContextSupported}}</span></li>
-            <li class="list-group-item">Screen Capture <span class="value">{{detect.isScreenCapturingSupported}}</span></li>
-            <li class="list-group-item">Data Channel (SCTP) <span class="value">{{detect.isSctpDataChannelsSupported}}</span></li>
-            <li class="list-group-item">Data Channel (RTP) <span class="value">{{detect.isRtpDataChannelsSupported}}</span></li>
-        </ul>
+    <div class="panel panel-default row detect">
+        <div class="panel-heading">
+            <h2 ng-show="detect.isWebRTCSupported" class="supported">WebRTC Supported <span class="glyphicon glyphicon-ok"></span></h2>
+            <h2 ng-show="!detect.isWebRTCSupported" class="fail">WebRTC NOT Supported <span class="glyphicon glyphicon-remove"></span></h2>
+        </div>
+        <div class="panel-body center detect" style="padding: 40px;">
+            <ul class="list-group" style="background-color: #000;">
+                <li class="list-group-item">Has Microphone <span class="value">{{detect.hasMicrophone}}</span></li>
+                <li class="list-group-item">Has Webcam <span class="value">{{detect.hasWebcam}}</span></li>
+                <li class="list-group-item">Audio Context <span class="value">{{detect.isAudioContextSupported}}</span></li>
+                <li class="list-group-item">Screen Capture <span class="value">{{detect.isScreenCapturingSupported}}</span></li>
+                <li class="list-group-item">Data Channel (SCTP) <span class="value">{{detect.isSctpDataChannelsSupported}}</span></li>
+                <li class="list-group-item">Data Channel (RTP) <span class="value">{{detect.isRtpDataChannelsSupported}}</span></li>
+            </ul>
+        </div>
     </div>
--->
+
 
 
     <div class="panel panel-default row">

@@ -4,21 +4,16 @@
 
 <div style="padding: 10px 15px;" class="row">
 
-
-
     <div class="col-sm-12 col-sm-3 col-md-2 rtc-video panel panel-default pin">
         <div class="panel-heading">Peer {{local.uuid}}</div>
         <div class="panel-body center">
             <div id="video{{local.id}}" class="video-holder">
             </div>
-            <nav class="cntrls navbar navbar-default navbar-static-top" role="navigation">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
-                    <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
-                    <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
-                    <li style="width: 25px;">&nbsp;</li>
-                </ul>
-            </nav>
+            <div class="navbar-default cntrls row">
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button></div>
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></div>
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></div>
+            </div>
         </div>
     </div>
 
@@ -27,14 +22,11 @@
         <div class="panel-body center">
             <div id="video{{peer.id}}" class="video-holder">
             </div>
-            <nav class="cntrls navbar navbar-default navbar-static-top" role="navigation">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button>
-                    <li><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></li>
-                    <li><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></li>
-                    <li style="width: 25px;">&nbsp;</li>
-                </ul>
-            </nav>
+            <div class="navbar-default cntrls row">
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.hangup()" type="button" class="btn btn-default navbar-btn">Hangup <span class="glyphicon glyphicon-remove"></span></button></div>
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.toggleMuteAudio()" type="button" ng-class="{mute:webrtc.muteAudio}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-headphones"></span></button></div>
+                <div class="col-sm-3 col-sm-3 col-xs-3"><button ng-click="webrtc.toggleMuteVideo()" type="button" ng-class="{mute:webrtc.muteVideo}" class="btn btn-default navbar-btn"><span class="glyphicon glyphicon-facetime-video"></span></button></div>
+            </div>
         </div>
     </div>
 

@@ -78,20 +78,18 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
 
   worker.webrtc().onAddLocalStream = (video) ->
-    id = $scope.peers.length+1
+    id = 0
     $scope.local =
       uuid:worker.uuid()
       username: ''
       local: true
       id: id
-    ###
-    $scope.peers.push($scope.local)
+    #$scope.peers.push($scope.local)
     jidToPeerId[worker.uuid()] = id
     setTimeout( ->
       $scope.$apply()
       $('#video'+id).append(video)
     ,0)
-    ###
 
   roomSubject = worker.subject('room')
   roomSub = roomSubject.filter( (r) -> r.op == 'join' ).subscribe( (ret) ->
