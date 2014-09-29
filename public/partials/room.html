@@ -40,14 +40,15 @@
 
 
 <div class="rtc-txt panel panel-default row" ng-class="{active:chat.active}">
-    <div class="panel-body center">
+    <div class="panel-body">
         <div class="history">
-
+            <span>test</span>
+            <span ng-repeat="msg in msgs"></span>
         </div>
         <div class="input-group">
-            <input type="text" ng-model="room" placeholder="Name of chat room .." class="form-control">
+            <input type="text" ng-model="message" placeholder="Message to send" class="form-control">
                 <span class="input-group-btn">
-                    <button class="btn btn-primary" ng-click="" type="button">Send!</button>
+                    <button class="btn btn-primary" ng-click="sendMessage(message)" type="button">Send!</button>
                 </span>
         </div><!-- /input-group -->
     </div>

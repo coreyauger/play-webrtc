@@ -3,10 +3,13 @@ package controllers
 import java.util.UUID
 
 import play.api._
+import play.api.libs.ws._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import play.api.libs.Comet
 import play.api.libs.iteratee.{Enumerator, Iteratee}
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.Play.current
 import play.api.libs.json.{Json, JsValue}
 import play.api.mvc._
 import actors._
@@ -23,7 +26,36 @@ object Application extends Controller {
   // don't forget to secure this...
   def api(uuid: String) = WebSocket.async[JsValue] { request =>
     println(s"call to api: $uuid")
-    WebSocketHandler.connect(uuid)
+    def returnAuthExcetion = {
+      println("Auth Exception")
+      // Just consume and ignore the input
+      val in = Iteratee.foreach[JsValue] { event =>}
+      // Send a single 'Hello!' message and close
+      val out = Enumerator(Json.obj("op" -> "exception", "slot" -> "exception", "msg" -> "Not Authorized").asInstanceOf[JsValue]) >>> Enumerator.eof
+      future {
+        (in, out)
+      }
+    }
+
+    Play.application.configuration.getBoolean("application.auth.enabled") match {
+      case Some(authEnable) =>
+        if(authEnable) {
+          val authUrl = Play.application.configuration.getString("application.auth.url").get
+          WS.url(authUrl).get.flatMap{
+            case json:JsValue =>
+              val auth = (json \ "auth").as[String]
+              if( auth.toUpperCase == "OK")
+                WebSocketHandler.connect(uuid)
+              else
+                returnAuthExcetion
+            case _ => returnAuthExcetion
+          }.fallbackTo( returnAuthExcetion )
+        }else {
+          WebSocketHandler.connect(uuid)
+        }
+      case None =>
+        WebSocketHandler.connect(uuid)
+    }
   }
 
   // NOTE: there are some issues with comet http chunking to be aware of..

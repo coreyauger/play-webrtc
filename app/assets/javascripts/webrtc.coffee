@@ -187,12 +187,13 @@ class window.WebRTC
       maxRetransmitTime: 3000 # in milliseconds
 
     # Add a data channel connection...
-    @peers[peer_id].dataChannel = peer_connection.createDataChannel("walkaboutDataChannel", dataChannelOptions);
+    @peers[peer_id].dataChannel = peer_connection.createDataChannel("walkaboutDataChannel"+peer_id, dataChannelOptions);
     @peers[peer_id].dataChannel.onerror = (error) ->
       console.log("Data Channel Error:", error)
     @peers[peer_id].dataChannel.onmessage =  (event) ->
       console.log("Got Data Channel Message:", event.data)
     @peers[peer_id].dataChannel.onopen = =>
+      console.log("The Data Channel is OPEN")
       @peers[peer_id].dataChannel.send("Hello World!")
     @peers[peer_id].dataChannel.onclose = ->
       console.log("The Data Channel is Closed")
@@ -225,7 +226,7 @@ class window.WebRTC
       console.log('attachMediaStream',remote_media[0])
       attachMediaStream(remote_media[0], event.stream)
       if( @onAddRemoteStream != null)
-        @onAddRemoteStream(peer_id,remote_media)
+        @onAddRemoteStream(peer_id,remote_media, @peers[peer_id].dataChannel)
       else
         $('body').append(remote_media)
 

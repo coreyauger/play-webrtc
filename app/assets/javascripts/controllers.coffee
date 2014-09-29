@@ -23,13 +23,27 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   $scope.memberList = []
   $scope.peers = []
   $scope.local = {}
+  $scope.msgs = []
+  $scope.message = ''
   jidToPeerId = {}
   $scope.chat =
     active: false
 
+  dataChannelList = []
+
   $scope.toggleChat = ->
     $scope.chat.active = !$scope.chat.active;
     setTimeout(->
+      $scope.$apply()
+    ,0)
+
+  $scope.sendMessage = (txt) ->
+    $scope.msgs.push(txt)
+    for dc in dataChannelList
+      console.log('dataChannel', dc)
+      dc.send(txt)
+    $scope.message = ''
+    setTimeout( ->
       $scope.$apply()
     ,0)
 
@@ -53,8 +67,9 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
         $scope.$apply()
       ,0)
 
-  worker.webrtc().onAddRemoteStream = (uuid, video) ->
+  worker.webrtc().onAddRemoteStream = (uuid, video, dataChannel) ->
     id = $scope.peers.length+1;
+    dataChannelList.push(dataChannel)
     $scope.peers.push({
       uuid:uuid
       local: false
@@ -62,6 +77,12 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
       id: id
     })
     jidToPeerId[uuid] = id
+    dataChannel.onmessage = (msg) =>
+      console.log('onmessage',msg)
+      $scope.msgs.push(msg.data)
+      setTimeout(->
+        $scope.$apply()
+      ,0)
     setTimeout(->
       $scope.$apply()
       $('#video'+id).append(video)
