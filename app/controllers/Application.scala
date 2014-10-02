@@ -42,17 +42,15 @@ object Application extends Controller {
         if(authEnable) {
           val authUrl = Play.application.configuration.getString("application.auth.url").get.replace("[USERNAME]",uuid).replace("[TOKEN]", token)
           println(s"using AUTH endpoing: $authUrl")
-          WS.url(authUrl).get.flatMap{
-            case json:JsValue =>
+          WS.url(authUrl).get.flatMap{ resp =>
               //{ 'status': true, 'usertype':PAT/CON/PHY }
-              val auth = (json \ "status").as[Boolean]
-              val userType = (json \ "usertype").as[String]
+              val auth = (resp.json \ "status").as[Boolean]
+              val userType = (resp.json \ "usertype").as[String]
               println(s"auth: $auth, userType: $userType" )
               if( auth )
                 WebSocketHandler.connect(uuid)
               else
                 returnAuthExcetion
-            case _ => returnAuthExcetion
           }.fallbackTo( returnAuthExcetion )
         }else {
           WebSocketHandler.connect(uuid)
