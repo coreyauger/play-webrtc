@@ -156,7 +156,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       // this is where we sort out what sockets the user wanted to sync data on.  Values:
       // 0 or not present: Sync down all sockets channels that belong to this user
       // 1: sync ONLY with the socket the message was sent from
-      // TODO: send to other actors..
       log.info(s"About to perform op: ${jr.subjectOp}")
       val fJson:Future[JsValue] = ops.get(jr.subjectOp).get.apply(jr.json)
       fJson.onSuccess{
@@ -175,7 +174,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
                 soc.push(Json.obj("padding" -> Array.fill[Char](25 * 1024)(' ').mkString))
           }
       }
-
 
     case c: UserSocketConnect =>
       log.info(s"UserActor::UserSocketConnect")
@@ -275,15 +273,11 @@ class LockActor extends Actor{
 
 // (CA) - One of possibly many web-socket connections (1 per device)
 class WebSocketActor(val user: User, val isComet: Boolean = false) extends Actor with ActorLogging{
-
-  // TODO: consider naming this actor by the ip and port that is in use on the client ?
-
   log.info(s"WebSocketActor create: ${user.uuid}")
   var members = Set.empty[String]
   val (socketEnumerator, socketChannel) = Concurrent.broadcast[JsValue]
 
   val userActor = {
-    // TODO: this is where we will locate the "single" user actor on the cluster...
     implicit val timeout =  Timeout(3 seconds)
     UserActor.lockActor ? GetUserActor(user)
   }
