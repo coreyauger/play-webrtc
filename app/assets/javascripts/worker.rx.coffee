@@ -117,7 +117,7 @@ class window.SocketWorker extends NGWorker
         try
           # NOTE: you should always use wss .. regular ws connections will be cached and proxied and therefor be messed up in the real world
           #@ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+);
-          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@uuid)
+          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@username+'/'+@uuid)
         catch e
           @socketRetry()
 

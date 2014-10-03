@@ -43,6 +43,7 @@ object Application extends Controller {
           val authUrl = Play.application.configuration.getString("application.auth.url").get.replace("[USERNAME]",uuid).replace("[TOKEN]", token)
           println(s"using AUTH endpoing: $authUrl")
           WS.url(authUrl).get.flatMap{ resp =>
+	      println(resp.json)
               //{ 'status': true, 'usertype':PAT/CON/PHY }
               val auth = (resp.json \ "status").as[Boolean]
               val userType = (resp.json \ "usertype").as[String]
