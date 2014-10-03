@@ -49,31 +49,17 @@ object Application extends Controller {
               val userType = (resp.json \ "usertype").as[String]
               println(s"auth: $auth, userType: $userType" )
               if( auth )
-                WebSocketHandler.connect(uuid)
+                WebSocketHandler.connect(User.create(uuid,userType))
               else
                 returnAuthExcetion
           }.fallbackTo( returnAuthExcetion )
         }else {
-          WebSocketHandler.connect(uuid)
+          WebSocketHandler.connect(User.create(uuid,""))
         }
       case None =>
-        WebSocketHandler.connect(uuid)
+        WebSocketHandler.connect(User.create(uuid,""))
     }
   }
 
-  // NOTE: there are some issues with comet http chunking to be aware of..
-  // See my blog post on the matter => http://affinetechnology.blogspot.ca/2014/03/play-framework-comet-chunking-support.html
-  def comet(uuid: String, token:String = "") = Action{
-    val enumerator = Await.result(WebSocketHandler.connectComet(uuid), 3.seconds)
-    Comet.CometMessage
-    // TODO: comet user actors never die .. since there is no disconnect message that is sent
-    Ok.chunked((enumerator &> Comet(callback = "parent.cometMessage")) >>> Enumerator.eof )
-  }
-
-  def cometSend(uuid: String) = Action.async{ request  =>
-    val data = request.body.asFormUrlEncoded.get.apply("data").head
-    WebSocketHandler.cometSend(uuid,  Json.parse(data))
-    Future.successful(Ok(Json.obj("status" -> "ack")))
-  }
 
 }
