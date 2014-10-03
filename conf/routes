@@ -9,11 +9,6 @@ GET         /                                   controllers.Application.index
 GET         /api/:uuid                          controllers.Application.api(uuid,token = "")
 GET         /api/:uuid/:token                   controllers.Application.api(uuid,token)
 
-# Web service
-GET         /ws/comet/:uuid                     controllers.Application.comet(uuid,token = "")
-GET         /ws/comet/:uuid/:token              controllers.Application.comet(uuid,token)
-POST        /ws/comet/send/:uuid                controllers.Application.cometSend(uuid)
-
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

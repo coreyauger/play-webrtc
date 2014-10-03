@@ -32,6 +32,20 @@ case class FutureJsonResponse(f: Future[JsValue]) extends JsonApi
 case class JsonRequest(subjectOp: String, json: JsValue, sync:Option[(Concurrent.Channel[JsValue],Boolean)] = None) extends JsonApi
 
 
+sealed abstract class User(val uuid:String)
+case class Patient(u:String) extends User(u)
+case class Physician(u:String) extends User(u)
+case class Consultant(u:String) extends User(u)
+
+object User{
+  def create(uuid: String, t:String) = {
+    t match{
+      case "PHY" => Physician(uuid)
+      case "CON" => Consultant(uuid)
+      case _ => Patient(uuid)
+    }
+  }
+}
 
 /**
  * Created by corey auger on 08/09/14.
@@ -48,10 +62,10 @@ class Room(val name:String){
 }
 
 
-class UserActor(val uuid: String) extends Actor with ActorLogging{
+class UserActor(val user: User) extends Actor with ActorLogging{
 
   implicit val timeout = Timeout(3 second)
-  log.info(s"UserActor create: $uuid")
+  log.info(s"UserActor create: ${user.uuid}")
   var socketmap = Map[String,(Concurrent.Channel[JsValue], Boolean)]()
 
   val dateFormatUtc: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -78,19 +92,16 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
   lazy val ops = Map[String, ((JsValue) => Future[JsValue])](
     "room-join" -> ((json: JsValue) =>{
       val name = (json \ "data" \ "name").as[String]
-
-      // NOTE: this is not thread safe ... you would want something similar to LockActor for this.
-      UserActor.rooms.get(name) match {
-        case Some(room) =>
-          room.members += uuid
-          pushRoomList
-          Future.successful(room.toJson)
-        case None =>
-          val r = new Room(name)
-          r.members += uuid
-          UserActor.rooms += (name -> r)
-          pushRoomList
-          Future.successful(r.toJson)
+      user match{
+        case Consultant(_) | Physician(_) =>
+          (UserActor.lockActor ? GetRoom(name)) map {
+            case room:Room =>
+              room.members += user.uuid
+              pushRoomList
+              room.toJson
+          }
+        case _ =>
+          Future.successful(Json.obj("error" -> "you do not have permission to create a room"))
       }
     }),
     "room-list" -> ((json: JsValue) => {
@@ -103,7 +114,7 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
       val data = (json \ "data" ).as[JsObject]
       val room = (json \ "data" \ "room" ).as[String]
       // this is from another user.. to send back down socket channels..
-      Future.successful(Json.arr(Json.obj( "room" -> room, "uuid" -> uuid, "data" -> data )) )
+      Future.successful(Json.arr(Json.obj( "room" -> room, "uuid" -> user.uuid, "data" -> data )) )
     }),
     "webrtc-join" ->((json: JsValue) =>{
       log.info(s"webrtc: $json")
@@ -111,36 +122,34 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
       //val offer = (json \ "data" \ "sendOffer" ).as[Boolean]
       log.debug(s"WEBRTC::JOIN room $room")
       // The Joiner is ALWAYS the initiator for the new connections to the peers...
-      // TODO: We are sending to more accounts then we need to by getting a list of ALL providers in the chat
-        val members = UserActor.rooms(room).members
-        println(s"You: $uuid")
-        val others = members.filterNot(_ == uuid)
-        log.debug("RELAY addPeer Other %s".format(others.mkString(",") ))
-        members.filter(_ != uuid).foreach( uid => UserActor.usermap.get(uid) match{
-          case Some(ua) =>
-            UserActor.route(uuid, ua,JsonRequest("webrtc-relay",Json.obj(
+      val members = UserActor.rooms(room).members
+      println(s"You: ${user.uuid}")
+      val others = members.filterNot(_ == user.uuid)
+      log.debug("RELAY addPeer Other %s".format(others.mkString(",") ))
+      members.filter(_ != user.uuid).foreach( uid => UserActor.usermap.get(uid) match{
+        case Some(ua) =>
+          UserActor.route(user.uuid, ua,JsonRequest("webrtc-relay",Json.obj(
+            "room" -> room,
+            "slot" -> "webrtc",
+            "op" -> "relay",
+            "data" -> Json.obj(
               "room" -> room,
-              "slot" -> "webrtc",
-              "op" -> "relay",
-              "data" -> Json.obj(
-                "room" -> room,
-                "actors" -> others,
-                "type" -> "addPeer",
-                "uuid" -> uuid,
-                "sendOffer" -> true
-              )
-            )))
-          case None =>
-            // remove the user
-            UserActor.usermap -= uid
-        })
+              "actors" -> others,
+              "type" -> "addPeer",
+              "uuid" -> user.uuid,
+              "sendOffer" -> true
+            )
+          )))
+        case None =>
+          // remove the user
+          UserActor.usermap -= uid
+      })
       Future.successful( Json.obj() )
     })
   )
 
   def receive = {
     case jr:JsonRequest =>
-      // TODO: this whole case bs is pretty ugly.. lets find a better way to do this.
       val slot = (jr.json \ "slot").asOpt[String]
       val op = (jr.json \ "op").asOpt[String]
       val syncOpt = (jr.json \ "sync").asOpt[Int]
@@ -178,11 +187,11 @@ class UserActor(val uuid: String) extends Actor with ActorLogging{
       socketmap -= context.sender.path.name
       sender ! d
       val numsockets = socketmap.size
-      log.info(s"Num sockets left $numsockets for $uuid")
+      log.info(s"Num sockets left $numsockets for ${user.uuid}")
       if( socketmap.isEmpty  ){
-        UserActor.usermap -= uuid
+        UserActor.usermap -= user.uuid
         // looping through ALL rooms to remove this member is bad !
-        UserActor.rooms.values.foreach( r => r.members -= uuid )
+        UserActor.rooms.values.foreach( r => r.members -= user.uuid )
         UserActor.rooms = UserActor.rooms.filter( _._2.members.size > 0 )
         log.info(s"No more sockets USER SHUTDOWN.. good bye !")
         context.stop(self)
@@ -237,36 +246,46 @@ object UserActor{
 
 
 // TODO: simplify this with an akka Agent
-case class GetUserActor(uuid: String)
+case class GetUserActor(user: User)
+case class GetRoom(roomName: String)
 class LockActor extends Actor{
 
   def receive = {
-    case GetUserActor(uuid) =>
-      val actor = UserActor.usermap.get(uuid) match{
+    case GetUserActor(user) =>
+      val actor = UserActor.usermap.get(user.uuid) match{
         case Some(actor) => actor
         case None =>
           // TODO: this is a hacky way to get psudeo actors unique to a chat
-          val ar = Akka.system.actorOf(Props(new UserActor(uuid)),uuid)
-          UserActor.usermap += uuid -> ar
+          val ar = Akka.system.actorOf(Props(new UserActor(user)),user.uuid)
+          UserActor.usermap += user.uuid -> ar
           ar
       }
       sender ! actor
+
+    case GetRoom(roomName) =>
+      val room = UserActor.rooms.get(roomName) match{
+        case Some(room) => room
+        case None =>
+          val r = new Room(roomName)
+          UserActor.rooms += (roomName -> r)
+      }
+      sender ! room
   }
 }
 
 // (CA) - One of possibly many web-socket connections (1 per device)
-class WebSocketActor(val uuid: String, val isComet: Boolean = false) extends Actor with ActorLogging{
+class WebSocketActor(val user: User, val isComet: Boolean = false) extends Actor with ActorLogging{
 
   // TODO: consider naming this actor by the ip and port that is in use on the client ?
 
-  log.info(s"WebSocketActor create: $uuid")
+  log.info(s"WebSocketActor create: ${user.uuid}")
   var members = Set.empty[String]
   val (socketEnumerator, socketChannel) = Concurrent.broadcast[JsValue]
 
   val userActor = {
     // TODO: this is where we will locate the "single" user actor on the cluster...
     implicit val timeout =  Timeout(3 seconds)
-    UserActor.lockActor ? GetUserActor(uuid)
+    UserActor.lockActor ? GetUserActor(user)
   }
 
   def receive = {
@@ -287,7 +306,7 @@ class WebSocketActor(val uuid: String, val isComet: Boolean = false) extends Act
     case jr:JsonRequest =>
       userActor.map {
         case (ua:ActorRef) =>
-          UserActor.route(uuid, ua, JsonRequest(jr.subjectOp, jr.json, Some((socketChannel,isComet))))
+          UserActor.route(user.uuid, ua, JsonRequest(jr.subjectOp, jr.json, Some((socketChannel,isComet))))
         case _ => throw new Exception("Unable to get a User Ref.  !!!!")
       }
 
@@ -311,28 +330,19 @@ object WebSocketHandler {
 
   var connections = List[ActorRef]()
 
-  def cometSend(jid: String, json: JsValue) ={
-    val op = (json \ "op").as[String]
-    val slot = (json \ "slot").as[String]
-    println(s"comet send doing $op")
-    UserActor.usermap.get(jid) match{
-      case Some(actor) => println(s"found actor... $jid"); actor ! JsonRequest("%s-%s".format(slot,op), json)
-      case None => println(s"Actor($jid) NOT found..doing nothing!");
-    }
-  }
 
-  def connect(uuid: String):scala.concurrent.Future[(Iteratee[JsValue,_],Enumerator[JsValue])] = {
-    println(s"WebSocketHandler: $uuid")
-    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid)))
+  def connect( user: User):scala.concurrent.Future[(Iteratee[JsValue,_],Enumerator[JsValue])] = {
+    println(s"WebSocketHandler: ${user.uuid}")
+    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(user)))
     //connections = connections :+ wsActor
-    (wsActor ? Connect(uuid)).map {
+    (wsActor ? Connect(user.uuid)).map {
       case NowConnected(enumerator) =>
         // Create an Iteratee to consume the feed
         val iteratee = Iteratee.foreach[JsValue] { event =>
           //println(event)
           wsActor ! JsonRequest((event \ "slot").as[String] + "-"+ (event \ "op").as[String], event)
         }.map { _ =>
-          wsActor ! Quit(uuid)
+          wsActor ! Quit(user.uuid)
         }
         (iteratee,enumerator)
 
@@ -353,27 +363,5 @@ object WebSocketHandler {
 
   }
 
-  def connectComet(uuid: String) = {
-    // TODO: comet user actors never die .. since there is no disconnect message that is sent
-    val wsActor = Akka.system.actorOf(Props(new WebSocketActor(uuid, true)))
-    println("Sensing Connect to CometActor")
-    (wsActor ? Connect(uuid)).map {
-      case NowConnected(enumerator) =>
-        println("COMET NOW CONNECTED !!!")
-        // just return the enumerator for comet
-        enumerator
-
-      // TODO: never called..
-      case Quit(userid) =>
-        connections = connections.filterNot(c => c == wsActor)
-        val enumerator =  Enumerator[JsValue](JsObject(Seq("op" -> JsString("done")))).andThen(Enumerator.enumInput(Input.EOF))
-        enumerator
-      // TODO: never called..
-      case CannotConnect(error) =>
-        // Send an error and close the socket
-        val enumerator =  Enumerator[JsValue](JsObject(Seq("error" -> JsString(error)))).andThen(Enumerator.enumInput(Input.EOF))
-        enumerator
-    }
-  }
 
 }
