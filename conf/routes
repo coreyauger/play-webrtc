@@ -8,6 +8,7 @@ GET         /                                   controllers.Application.index
 # Websocket API
 GET         /api/:uuid                          controllers.Application.api(uuid,token = "")
 GET         /api/:uuid/:token                   controllers.Application.api(uuid,token)
+GET         /api/test/:uuid/:token/:accnt       controllers.Application.apitest(uuid,token,accnt)
 
 
 # Map static resources from the /public folder to the /assets URL path

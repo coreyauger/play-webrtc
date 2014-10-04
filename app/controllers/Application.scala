@@ -23,7 +23,6 @@ object Application extends Controller {
     Ok(views.html.index(uid))
   }
 
-  // don't forget to secure this...
   def api(username: String, token:String) = WebSocket.async[JsValue] { request =>
     println(s"call to api: $username")
     def returnAuthExcetion = {
@@ -31,7 +30,7 @@ object Application extends Controller {
       // Just consume and ignore the input
       val in = Iteratee.foreach[JsValue] { event =>}
       // Send a single 'Hello!' message and close
-      val out = Enumerator(Json.obj("op" -> "exception", "slot" -> "exception", "msg" -> "Not Authorized").asInstanceOf[JsValue]) >>> Enumerator.eof
+      val out = Enumerator(Json.obj("op" -> "connection", "slot" -> "socket", "data" ->  Json.obj("error" -> "Not Authorized")).asInstanceOf[JsValue]) >>> Enumerator.eof
       Future {
         (in, out)
       }
@@ -58,6 +57,34 @@ object Application extends Controller {
         }
       case None =>
         WebSocketHandler.connect(User.create("",""))
+    }
+  }
+
+
+
+
+  def apitest(username: String, token:String, userType:String) = WebSocket.async[JsValue] { request =>
+    println(s"call to api: $username")
+    def returnAuthExcetion = {
+      println("Auth in on .. you are not in TEST mode.")
+      // Just consume and ignore the input
+      val in = Iteratee.foreach[JsValue] { event =>}
+      // Send a single 'Hello!' message and close
+      val out = Enumerator(Json.obj("op" -> "exception", "slot" -> "exception", "msg" -> "Testing is not allowed while auth is enabled.  Disable authentication in the config").asInstanceOf[JsValue]) >>> Enumerator.eof
+      Future {
+        (in, out)
+      }
+    }
+
+    Play.application.configuration.getBoolean("application.auth.enabled") match {
+      case Some(authEnable) =>
+        if(authEnable) {
+          returnAuthExcetion
+        }else {
+          WebSocketHandler.connect(User.create(username,token,userType))
+        }
+      case None =>
+        returnAuthExcetion
     }
   }
 
