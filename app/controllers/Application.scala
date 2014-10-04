@@ -24,8 +24,8 @@ object Application extends Controller {
   }
 
   // don't forget to secure this...
-  def api(uuid: String, token:String) = WebSocket.async[JsValue] { request =>
-    println(s"call to api: $uuid")
+  def api(username: String, token:String) = WebSocket.async[JsValue] { request =>
+    println(s"call to api: $username")
     def returnAuthExcetion = {
       println("Auth Exception")
       // Just consume and ignore the input
@@ -40,7 +40,7 @@ object Application extends Controller {
     Play.application.configuration.getBoolean("application.auth.enabled") match {
       case Some(authEnable) =>
         if(authEnable) {
-          val authUrl = Play.application.configuration.getString("application.auth.url").get.replace("[USERNAME]",uuid).replace("[TOKEN]", token)
+          val authUrl = Play.application.configuration.getString("application.auth.url").get.replace("[USERNAME]",username).replace("[TOKEN]", token)
           println(s"using AUTH endpoing: $authUrl")
           WS.url(authUrl).get.flatMap{ resp =>
               //{ 'status': true, 'usertype':PAT/CON/PHY }
@@ -48,15 +48,15 @@ object Application extends Controller {
               val userType = (resp.json \ "usertype").as[String]
               println(s"auth: $auth, userType: $userType" )
               if( auth )
-                WebSocketHandler.connect(User.create(uuid,userType))
+                WebSocketHandler.connect(User.create(username,token,userType))
               else
                 returnAuthExcetion
           }.fallbackTo( returnAuthExcetion )
         }else {
-          WebSocketHandler.connect(User.create(uuid,""))
+          WebSocketHandler.connect(User.create("",""))
         }
       case None =>
-        WebSocketHandler.connect(User.create(uuid,""))
+        WebSocketHandler.connect(User.create("",""))
     }
   }
 

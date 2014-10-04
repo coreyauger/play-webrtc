@@ -32,17 +32,17 @@ case class FutureJsonResponse(f: Future[JsValue]) extends JsonApi
 case class JsonRequest(subjectOp: String, json: JsValue, sync:Option[(Concurrent.Channel[JsValue],Boolean)] = None) extends JsonApi
 
 
-sealed abstract class User(val uuid:String)
-case class Patient(u:String) extends User(u)
-case class Physician(u:String) extends User(u)
-case class Consultant(u:String) extends User(u)
+sealed abstract class User(val username:String, val uuid:String)
+case class Patient(n:String, u:String) extends User(n,u)
+case class Physician(n:String, u:String) extends User(n,u)
+case class Consultant(n:String, u:String) extends User(n,u)
 
 object User{
-  def create(uuid: String, t:String) = {
+  def create(username: String, uuid: String, t:String = "PAT") = {
     t match{
-      case "PHY" => Physician(uuid)
-      case "CON" => Consultant(uuid)
-      case _ => Patient(uuid)
+      case "PHY" => Physician(username, uuid)
+      case "CON" => Consultant(username, uuid)
+      case _ => Patient(username, uuid)
     }
   }
 }
@@ -92,16 +92,26 @@ class UserActor(val user: User) extends Actor with ActorLogging{
   lazy val ops = Map[String, ((JsValue) => Future[JsValue])](
     "room-join" -> ((json: JsValue) =>{
       val name = (json \ "data" \ "name").as[String]
+      val members = (json \ "data" \ "members").as[List[String]]
       user match{
-        case Consultant(_) | Physician(_) =>
+        case Consultant(_,_) | Physician(_,_) =>
           (UserActor.lockActor ? GetRoom(name)) map {
             case room:Room =>
-              room.members += user.uuid
+              room.members = (user.username :: members).toSet
               pushRoomList
               room.toJson
           }
-        case _ =>
-          Future.successful(Json.obj("error" -> "you do not have permission to create a room"))
+        case Patient(_,_) =>
+          UserActor.rooms.get(name) match {
+            case Some(room) =>
+              if (room.members.contains(user.username)) {
+                pushRoomList
+                Future.successful(room.toJson)
+              } else {
+                Future.successful(Json.obj("error" -> "Unauthorized to join this room"))
+              }
+            case _ => Future.successful(Json.obj("error" -> "No room"))
+          }
       }
     }),
     "room-list" -> ((json: JsValue) => {
@@ -141,8 +151,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
             )
           )))
         case None =>
-          // remove the user
-          UserActor.usermap -= uid
+          println(s"User not found: $uid")
       })
       Future.successful( Json.obj() )
     })
