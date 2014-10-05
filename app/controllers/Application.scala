@@ -30,7 +30,7 @@ object Application extends Controller {
       // Just consume and ignore the input
       val in = Iteratee.foreach[JsValue] { event =>}
       // Send a single 'Hello!' message and close
-      val out = Enumerator(Json.obj("op" -> "connection", "slot" -> "socket", "data" ->  Json.obj("error" -> "Not Authorized")).asInstanceOf[JsValue]) >>> Enumerator.eof
+      val out = Enumerator(Json.obj("op" -> "connection", "slot" -> "socket", "data" ->  Json.obj("code" -> 1, "error" -> "Not Authorized")).asInstanceOf[JsValue]) >>> Enumerator.eof
       Future {
         (in, out)
       }
@@ -70,7 +70,7 @@ object Application extends Controller {
       // Just consume and ignore the input
       val in = Iteratee.foreach[JsValue] { event =>}
       // Send a single 'Hello!' message and close
-      val out = Enumerator(Json.obj("op" -> "exception", "slot" -> "exception", "msg" -> "Testing is not allowed while auth is enabled.  Disable authentication in the config").asInstanceOf[JsValue]) >>> Enumerator.eof
+      val out = Enumerator(Json.obj("op" -> "connection", "slot" -> "socket", "data" ->  Json.obj("code" -> 2, "error" -> "Testing is not allowed while auth is enabled.  Disable authentication in the config")).asInstanceOf[JsValue]) >>> Enumerator.eof
       Future {
         (in, out)
       }
