@@ -63,7 +63,7 @@ object Application extends Controller {
 
 
 
-  def apitest(username: String, token:String, userType:String) = WebSocket.async[JsValue] { request =>
+  def apitest(username: String, token:String, role:String) = WebSocket.async[JsValue] { request =>
     println(s"call to api: $username")
     def returnAuthExcetion = {
       println("Auth in on .. you are not in TEST mode.")
@@ -81,7 +81,7 @@ object Application extends Controller {
         if(authEnable) {
           returnAuthExcetion
         }else {
-          WebSocketHandler.connect(User.create(username,token,userType))
+          WebSocketHandler.connect(User.create(username,token,role))
         }
       case None =>
         returnAuthExcetion

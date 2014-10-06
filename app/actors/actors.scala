@@ -59,12 +59,13 @@ class Room(val name:String){
       "members" -> members
     )
   }
+  override def toString = toJson.toString()
 }
 
 
 class UserActor(val user: User) extends Actor with ActorLogging{
 
-  implicit val timeout = Timeout(3 second)
+  implicit val timeout = Timeout(5 second)
   log.info(s"UserActor create: ${user.username}")
   var socketmap = Map[String,(Concurrent.Channel[JsValue], Boolean)]()
 
@@ -93,14 +94,19 @@ class UserActor(val user: User) extends Actor with ActorLogging{
     "room-join" -> ((json: JsValue) =>{
       val name = (json \ "data" \ "name").as[String]
       val members = (json \ "data" \ "members").as[List[String]]
+      log.info(s"User ${user.username} asking to create/join room $name with members: $members")
       user match{
-        case Consultant(_,_) | Physician(_,_) =>
+        case (_:Consultant | _:Physician) =>
+          println(s"Get room $name")
           (UserActor.lockActor ? GetRoom(name)) map {
             case room:Room =>
+              println("here..")
               room.members = (user.username :: members).toSet
+              println(s"User ${user.username} owns room $room")
               members.foreach { m =>
                 socketmap.get(m) match {
                   case Some((soc, isComet)) =>
+                    println(s"Sending room [${room.name}] invite to: $m")
                     soc.push(Json.obj(
                       "slot" -> "room",
                       "op" -> "invite",
@@ -113,6 +119,10 @@ class UserActor(val user: User) extends Actor with ActorLogging{
               }
               pushRoomList
               room.toJson
+            case None =>
+              println("...")
+              log.error("Creating a room FAILED")
+              Json.obj("error" -> "create room failed.")
           }
         case Patient(_,_) =>
           UserActor.rooms.get(name) match {
@@ -123,8 +133,11 @@ class UserActor(val user: User) extends Actor with ActorLogging{
               } else {
                 Future.successful(Json.obj("error" -> "Unauthorized to join this room"))
               }
-            case _ => Future.successful(Json.obj("error" -> "No room"))
+            case _ => Future.successful(Json.obj("error" -> "PAT can not create a room"))
           }
+        case _ =>
+          log.error("Unknown USER TYPE")
+          Future.successful(Json.obj("error" -> "Unknown user type."))
       }
     }),
     "room-list" -> ((json: JsValue) => {
@@ -273,6 +286,7 @@ class LockActor extends Actor{
 
   def receive = {
     case GetUserActor(user) =>
+      println(s"Looking for user actor: ${user.username}")
       val actor = UserActor.usermap.get(user.username) match{
         case Some(actor) => actor
         case None =>
@@ -284,13 +298,15 @@ class LockActor extends Actor{
       sender ! actor
 
     case GetRoom(roomName) =>
+      println(s"LockActor::GetRoom($roomName)")
       val room = UserActor.rooms.get(roomName) match{
-        case Some(room) => room
+        case Some(r) => r
         case None =>
           val r = new Room(roomName)
           UserActor.rooms += (roomName -> r)
+          r
       }
-      sender ! room
+      context.sender ! room
   }
 }
 

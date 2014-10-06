@@ -18,7 +18,7 @@ webrtcApp.config(($locationProvider,$routeProvider) ->
   $routeProvider.when('/home',
     templateUrl: '/assets/partials/home.html',
     controller: 'HomeCtrl'
-  ).when('/room/:room',
+  ).when('/room/:room/:members',
     templateUrl: '/assets/partials/room.html',
     controller: 'RoomCtrl'
   ).otherwise({

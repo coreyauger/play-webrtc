@@ -7,9 +7,21 @@ webrtcControllers = angular.module('webrtcControllers', [])
 
 
 webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worker) ->
-  $scope.room = ''
+  $scope.user =
+    name: ''
+    role: ''
+  $scope.room =
+    name: ''
+    members: ''
+
+  $scope.connect = (u) ->
+    worker.username = @username
+    worker.role = @role
+    worker.testing = true
+    worker.connect()
+
   $scope.joinRoom = (name) ->
-    $location.path('/room/'+name)
+    $location.path('/room/'+$scope.room.name+'/'+$scope.room.members)
     setTimeout(->
       $scope.$apply()
     ,0)
@@ -20,6 +32,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 ).controller('RoomCtrl',($scope, $routeParams, $location, worker) ->
 
   $scope.room = $routeParams.room
+  $scope.members = $routeParams.members.split(',')
   $scope.memberList = []
   $scope.peers = []
   $scope.local = {}
@@ -118,8 +131,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     worker.webrtc().init($scope.room, true)
   )
 
-  worker.onNext({slot:'room', op:'list',data:{}})
-  worker.onNext({slot:'room',op:'join',data:{name: $scope.room}})
+  worker.onNext({slot:'room',op:'join',data:{name: $scope.room, members:$scope.members}})
 
   $scope.$on("$destroy", ->
     worker.webrtc().stop()
@@ -143,6 +155,8 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
 
 webrtcControllers.factory("worker",['$rootScope','$q', ($rootScope,$q) ->
-  worker = new window.SocketWorker(window._uuid, 'username')
+  window.WorkerData.testing = true
+  window.WorkerData.role = 'CON'
+  worker = new window.SocketWorker('username',window._uuid)
   worker.controllerOps
 ])

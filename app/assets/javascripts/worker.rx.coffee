@@ -2,13 +2,10 @@
 #
 # Global struct to hold app data
 window.WorkerData =
-  UUID: null
   name: ''
+  testing: false
   providers: []
   Worker: null
-  Notification:
-    slot: {}
-    nextid: 0
   pending: []
 
 
@@ -16,13 +13,13 @@ window.WorkerData =
 #
 # CometSocket class
 class CometSocket
-  constructor: (uuid, domain) ->
+  constructor: (uuid, token, domain) ->
     @url = uuid
     console.log("CometSocket calling create")
     @$frame = $('#comet')
     if( this.$frame.size() == 0 )
-      #$('body').append('<iframe id="comet" src="http://'+domain+':9009/ws/comet/'+uuid+'/'+token+'" style="visibility: hidden"></iframe>')
-      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+uuid+'" style="visibility: hidden"></iframe>')
+      #$('body').append('<iframe id="comet" src="http://'+domain+':9009/ws/comet/'+username+'/'+token+'" style="visibility: hidden"></iframe>')
+      $('body').append('<iframe id="comet" src="https://'+domain+'/ws/comet/'+username+'" style="visibility: hidden"></iframe>')
       @.$frame = $('#comet')
   send: (data) ->
     console.log("CometSocket SEND")
@@ -38,8 +35,7 @@ class CometSocket
 #
 # Worker Class
 class window.NGWorker
-  constructor: (uuid, username, domain) ->
-    @uuid = uuid
+  constructor: (username, token, domain) ->
     @domain = domain || self.location.hostname
     @username = username
     @isConnected = false
@@ -48,11 +44,11 @@ class window.NGWorker
     @subjects = {}
 
     @controllerOps =
-      uuid: => @uuid
       username: -> @username
       subject: (subject) => @subject(subject)
       onNext: (data) => @onNext(data)
       webrtc: => @webrtc
+      connect: => @connect()
       verifyConnection: =>
         if( !@isConnected && @retrySocket)
           @connect()
@@ -79,14 +75,12 @@ class window.NGWorker
   subject: (subject) ->
     if( !@subjects[subject] )
       @subjects[subject] = new Rx.Subject()
-      #@wsObservable.filter( (s) ->s.slot == subject ).subscribe(rxSubject)
       @wsSubject.filter((s) ->s.slot == subject ).subscribe(@subjects[subject])
     @subjects[subject]
 
   replaySubject:(subject) ->
     if( !@subjects[subject] )
       @subjects[subject] = new Rx.ReplaySubject()
-      #@wsObservable.filter( (s) ->s.slot == subject ).subscribe(rxSubject)
       @wsSubject.filter((s) ->s.slot == subject ).subscribe(@subjects[subject])
     @subjects[subject]
 
@@ -98,8 +92,8 @@ class window.NGWorker
 #
 # WalkaboutSocketWorker
 class window.SocketWorker extends NGWorker
-  constructor: (uuid, username, token, domain) ->
-    super(uuid, username, token, domain)
+  constructor: (username, token, domain) ->
+    super(username, token, domain)
   connect: ->
     if( !@isConnected && @retrySocket)
       @retrySocket = false
@@ -108,7 +102,7 @@ class window.SocketWorker extends NGWorker
       nua = navigator.userAgent;
       isAndroidStock = (nua.indexOf('Android ') > -1 && nua.indexOf('Chrome') == -1 && nua.indexOf('Firefox') == -1 && nua.indexOf('Opera') == -1)
       if isAndroidStock || !window.WebSocket
-        @ws = new CometSocket(@uuid, @token)
+        @ws = new CometSocket(@username, @token)
         ws = @ws;
         setTimeout( ->
           ws.onopen({})  # fire the open event..
@@ -116,8 +110,13 @@ class window.SocketWorker extends NGWorker
       else
         try
           # NOTE: you should always use wss .. regular ws connections will be cached and proxied and therefor be messed up in the real world
-          #@ws = new WebSocket('wss://'+@domain+'/api/'+@uuid+);
-          @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@username+'/'+@uuid)
+          #@ws = new WebSocket('wss://'+@domain+':'+self.location.port+'/api/'+@username+'/'+@token);
+          if( window.WorkerData.testing )
+            console.log('ws://'+@domain+':'+self.location.port+'/api/test/'+@username+'/'+@token+'/'+window.WorkerData.role)
+            @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/test/'+@username+'/'+@token+'/'+window.WorkerData.role)
+          else
+            console.log('ws://'+@domain+':'+self.location.port+'/api/'+@username+'/'+@token)
+            @ws = new WebSocket('ws://'+@domain+':'+self.location.port+'/api/'+@username+'/'+@token)
         catch e
           @socketRetry()
 
@@ -128,8 +127,6 @@ class window.SocketWorker extends NGWorker
           @isConnected = true
           @retrySocket = true
           console.log('Setting isConnected = ' + @isConnected)
-          # get a list of our friends
-          actors = []
           # Send any pending request..
           console.log("Sending " + WorkerData.pending.length + " items from queue")
           for p of WorkerData.pending
