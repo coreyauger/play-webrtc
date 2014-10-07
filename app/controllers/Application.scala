@@ -19,9 +19,15 @@ import scala.concurrent._
 object Application extends Controller {
 
   def index = Action {
-    val uid = UUID.randomUUID().toString
-    Ok(views.html.index(uid))
+    Ok(views.html.index("","",""))
   }
+
+
+  def test(username: String, role:String) = Action {
+    val uid = UUID.randomUUID().toString
+    Ok(views.html.index(username, "", role))
+  }
+
 
   def api(username: String, token:String) = WebSocket.async[JsValue] { request =>
     println(s"call to api: $username")

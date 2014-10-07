@@ -4,6 +4,7 @@
 
 # Home page
 GET         /                                   controllers.Application.index
+GET         /test/:user/:role                   controllers.Application.test(user, role)
 
 # Websocket API
 GET         /api/:uuid                          controllers.Application.api(uuid,token = "")

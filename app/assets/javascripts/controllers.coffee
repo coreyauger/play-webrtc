@@ -114,12 +114,12 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
   worker.webrtc().onAddLocalStream = (video) ->
     id = 0
     $scope.local =
-      uuid:worker.uuid()
+      uuid:worker.username()
       username: ''
       local: true
       id: id
     #$scope.peers.push($scope.local)
-    jidToPeerId[worker.uuid()] = id
+    jidToPeerId[worker.username()] = id
     setTimeout( ->
       $scope.$apply()
       $('#video'+id).append(video)
@@ -156,7 +156,12 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
 
 webrtcControllers.factory("worker",['$rootScope','$q', ($rootScope,$q) ->
   window.WorkerData.testing = true
+<<<<<<< HEAD
   window.WorkerData.role = 'CON'
   worker = new window.SocketWorker('pat1','828bd901-7bb0-4a18-8903-0c5b93869009')
+=======
+  window.WorkerData.role = window._role
+  worker = new window.SocketWorker(window._username,window._token)
+>>>>>>> bc935eb19947035d9e5fa6dfbbf51fccf69d6afa
   worker.controllerOps
 ])

@@ -100,7 +100,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
           println(s"Get room $name")
           (UserActor.lockActor ? GetRoom(name)) map {
             case room:Room =>
-              println("here..")
               room.members = (user.username :: members).toSet
               println(s"User ${user.username} owns room $room")
               members.foreach { m =>
