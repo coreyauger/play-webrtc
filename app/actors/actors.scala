@@ -215,6 +215,18 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       log.info(s"UserActor::UserSocketConnect")
       socketmap += context.sender.path.name -> (c.socket, c.isComet)
       sender ! c
+      UserActor.rooms.filter( _._2.members.contains(user.username) ).foreach{
+        case (name, room) =>
+          c.socket.push(Json.obj(
+            "slot" -> "room",
+            "op" -> "invite",
+            "data" -> Json.obj(
+              "rooms" -> name
+            )
+          ))
+      }
+
+
 
     case d: UserSocketDisconnect =>
       log.info(s"UserActor::UserSocketDisconnect")
