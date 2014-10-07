@@ -1,4 +1,4 @@
-@(uuid: String)
+@(username: String, token: String, role: String = "")
 
 
 @meta = {
@@ -14,7 +14,9 @@
 <script src='@routes.Assets.at("javascripts/app.js")'></script>
 <script src='@routes.Assets.at("javascripts/controllers.js")'></script>
 <script language="JavaScript">
-    _uuid = '12345';
+    _username = '@username';
+    _token = '@token';
+    _role = '@role';
 </script>
 }
 
