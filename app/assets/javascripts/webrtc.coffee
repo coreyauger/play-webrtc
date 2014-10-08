@@ -76,7 +76,7 @@ class window.WebRTC
 
   send: (op, data) ->
     #actors = Object.keys( @peers )
-    data.peer_id = @worker.uuid
+    data.peer_id = @worker.username
     data.room = @room
     msg = {slot:'webrtc',op:op,data:data}
     console.log('sending',msg)
@@ -91,7 +91,7 @@ class window.WebRTC
     @send('relay', {
       'type':'hangup'
       'actors': peerIds,
-      'uuid': @worker.uuid
+      'uuid': @worker.username
     })
     @peers = {}
     if( @localStream? )
