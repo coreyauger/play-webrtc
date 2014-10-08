@@ -20,6 +20,12 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     worker.testing = true
     worker.connect()
 
+  $scope.join = (name) ->
+    $location.path('/room/'+name+'/none')
+    setTimeout(->
+      $scope.$apply()
+    ,0)
+
   $scope.joinRoom = (name) ->
     $location.path('/room/'+$scope.room.name+'/'+$scope.room.members)
     setTimeout(->

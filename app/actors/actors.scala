@@ -140,10 +140,12 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       }
     }),
     "room-list" -> ((json: JsValue) => {
-        Future.successful(Json.obj(
-          // only list rooms that this user is a member in
-          "rooms" -> UserActor.rooms.filter( r => r._2.members.contains(user.username) ).values.map(_.toJson)
-        ))
+      println(s"ALL ROOMS.......")
+      UserActor.rooms.values.foreach(println)
+      Future.successful(Json.obj(
+        // only list rooms that this user is a member in
+        "rooms" -> UserActor.rooms.filter( r => r._2.members.contains(user.username) ).values.map(_.toJson)
+      ))
     }),
     "webrtc-relay" ->((json: JsValue) =>{
       log.info(s"webrtc: $json")
@@ -236,8 +238,13 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       if( socketmap.isEmpty  ){
         UserActor.usermap -= user.username
         // looping through ALL rooms to remove this member is bad !
-        UserActor.rooms.values.foreach( r => r.members -= user.username )
-        UserActor.rooms = UserActor.rooms.filter( _._2.members.size > 0 )
+        user match{
+          case (_:Consultant | _:Physician) =>
+            UserActor.rooms = UserActor.rooms.filterNot( _._2.members.contains(user.username) )
+          case _ => // do nothing...
+        }
+        //UserActor.rooms.values.foreach( r => r.members -= user.username )
+        //UserActor.rooms = UserActor.rooms.filter( _._2.members.size > 0 )
         log.info(s"No more sockets USER SHUTDOWN.. good bye !")
         context.stop(self)
       }
