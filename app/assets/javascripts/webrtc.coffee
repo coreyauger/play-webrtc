@@ -351,6 +351,8 @@ class window.WebRTC
         console.log('Added the ICE Candidate.')
       , (err) ->
         console.log('[ERROR] - ICE Candidate.' + err)
+        console.log('config',config)
+        console.log('ice_candidate',ice_candidate)
       )
     else
       #alert('[ERROR] - no peer for peer_id: '+config.peer_id)
