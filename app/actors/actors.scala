@@ -102,6 +102,8 @@ class UserActor(val user: User) extends Actor with ActorLogging{
             case room:Room =>
               room.members = (user.username :: members).toSet
               println(s"User ${user.username} owns room $room")
+              println("users online.......")
+              socketmap.keys.foreach(println)
               members.foreach { m =>
                 socketmap.get(m) match {
                   case Some((soc, isComet)) =>
@@ -214,7 +216,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
 
     case c: UserSocketConnect =>
       log.info(s"UserActor::UserSocketConnect")
-      socketmap += context.sender.path.name -> (c.socket, c.isComet)
+      socketmap += user.username -> (c.socket, c.isComet)
       sender ! c
       UserActor.rooms.filter( _._2.members.contains(user.username) ).foreach{
         case (name, room) =>
@@ -231,7 +233,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
 
     case d: UserSocketDisconnect =>
       log.info(s"UserActor::UserSocketDisconnect")
-      socketmap -= context.sender.path.name
+      socketmap -= user.username
       sender ! d
       val numsockets = socketmap.size
       log.info(s"Num sockets left $numsockets for ${user.username}")
