@@ -51,12 +51,13 @@ object User{
  * Created by corey auger on 08/09/14.
  */
 
-class Room(val name:String){
+class Room(val name:String, val owner:String){
   var members = Set[String]()
   def toJson = {
     Json.obj(
       "name" -> name,
-      "members" -> members
+      "members" -> members,
+      "owner" -> owner
     )
   }
   override def toString = toJson.toString()
@@ -98,25 +99,16 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       user match{
         case (_:Consultant | _:Physician) =>
           println(s"Get room $name")
-          (UserActor.lockActor ? GetRoom(name)) map {
+          (UserActor.lockActor ? GetRoom(user, name)) map {
             case room:Room =>
               room.members = (user.username :: members).toSet
               println(s"User ${user.username} owns room $room")
-              println("users online.......")
-              socketmap.keys.foreach(println)
               members.foreach { m =>
-                socketmap.get(m) match {
-                  case Some((soc, isComet)) =>
-                    println(s"Sending room [${room.name}] invite to: $m")
-                    soc.push(Json.obj(
-                      "slot" -> "room",
-                      "op" -> "invite",
-                      "data" -> Json.obj(
-                        "rooms" -> name
-                      )
-                    ))
-                  case None => println(s"User not online $m")
-                }
+                UserActor.route(m, context.self,JsonRequest("room-invite",Json.obj(
+                  "slot" -> "room",
+                  "op" -> "invite",
+                  "data" -> Json.obj("room" -> room.toJson)
+                )))
               }
               pushRoomList
               room.toJson
@@ -140,6 +132,11 @@ class UserActor(val user: User) extends Actor with ActorLogging{
           log.error("Unknown USER TYPE")
           Future.successful(Json.obj("error" -> "Unknown user type."))
       }
+    }),
+    "room-invite" -> ((json: JsValue) => {
+      val room = (json \ "data" \ "room")
+      println(s"room $room")
+      Future.successful(room)
     }),
     "room-list" -> ((json: JsValue) => {
       println(s"ALL ROOMS.......")
@@ -216,7 +213,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
 
     case c: UserSocketConnect =>
       log.info(s"UserActor::UserSocketConnect")
-      socketmap += user.username -> (c.socket, c.isComet)
+      socketmap += context.self.path.toString -> (c.socket, c.isComet)
       sender ! c
       UserActor.rooms.filter( _._2.members.contains(user.username) ).foreach{
         case (name, room) =>
@@ -224,7 +221,8 @@ class UserActor(val user: User) extends Actor with ActorLogging{
             "slot" -> "room",
             "op" -> "invite",
             "data" -> Json.obj(
-              "rooms" -> name
+              "rooms" -> name,
+              "owner" -> room.owner
             )
           ))
       }
@@ -233,7 +231,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
 
     case d: UserSocketDisconnect =>
       log.info(s"UserActor::UserSocketDisconnect")
-      socketmap -= user.username
+      socketmap -= context.self.path.toString
       sender ! d
       val numsockets = socketmap.size
       log.info(s"Num sockets left $numsockets for ${user.username}")
@@ -301,7 +299,7 @@ object UserActor{
 
 // TODO: simplify this with an akka Agent
 case class GetUserActor(user: User)
-case class GetRoom(roomName: String)
+case class GetRoom(user:User, roomName: String)
 class LockActor extends Actor{
 
   def receive = {
@@ -317,12 +315,12 @@ class LockActor extends Actor{
       }
       sender ! actor
 
-    case GetRoom(roomName) =>
+    case GetRoom(user:User, roomName) =>
       println(s"LockActor::GetRoom($roomName)")
       val room = UserActor.rooms.get(roomName) match{
         case Some(r) => r
         case None =>
-          val r = new Room(roomName)
+          val r = new Room(roomName, user.username)
           UserActor.rooms += (roomName -> r)
           r
       }
