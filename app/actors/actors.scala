@@ -74,23 +74,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
   dateFormatUtc.setTimeZone(TimeZone.getTimeZone("UTC"))
 
 
-  def pushRoomList = {
-    socketmap.values.foreach{
-      case (soc, isComet) =>
-        soc.push(Json.obj(
-          "slot" -> "room",
-          "op" -> "list",
-          "data" -> Json.obj(
-            "rooms" -> UserActor.rooms.values.map(_.toJson)
-          )
-        ))
-        // (CA) - this is super lame...
-        // we need to pad come request.. and turn off gzip to all for each request to be pushed more info on my blog.
-        if (isComet)
-          soc.push(Json.obj("padding" -> Array.fill[Char](25 * 1024)(' ').mkString))
-    }
-  }
-
   lazy val ops = Map[String, ((JsValue) => Future[JsValue])](
     "room-join" -> ((json: JsValue) =>{
       val name = (json \ "data" \ "name").as[String]
@@ -104,13 +87,15 @@ class UserActor(val user: User) extends Actor with ActorLogging{
               room.members = (user.username :: members).toSet
               println(s"User ${user.username} owns room $room")
               members.foreach { m =>
-                UserActor.route(m, context.self,JsonRequest("room-invite",Json.obj(
+                UserActor.route(user.username, context.self,JsonRequest("room-invite",Json.obj(
                   "slot" -> "room",
                   "op" -> "invite",
-                  "data" -> Json.obj("room" -> room.toJson)
+                  "data" -> Json.obj(
+                    "actors" -> Json.arr(m),
+                    "room" -> room.toJson
+                  )
                 )))
               }
-              pushRoomList
               room.toJson
             case None =>
               println("...")
@@ -121,7 +106,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
           UserActor.rooms.get(name) match {
             case Some(room) =>
               if (room.members.contains(user.username)) {
-                pushRoomList
                 Future.successful(room.toJson)
               } else {
                 Future.successful(Json.obj("error" -> "Unauthorized to join this room"))
@@ -221,7 +205,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
             "slot" -> "room",
             "op" -> "invite",
             "data" -> Json.obj(
-              "rooms" -> name,
+              "room" -> name,
               "owner" -> room.owner
             )
           ))
