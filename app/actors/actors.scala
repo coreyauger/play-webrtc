@@ -122,6 +122,11 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       println(s"room $room")
       Future.successful(room)
     }),
+    "room-destroy" -> ((json: JsValue) => {
+      val room = (json \ "data" \ "room")
+      println(s"room $room")
+      Future.successful(room)
+    }),
     "room-list" -> ((json: JsValue) => {
       println(s"ALL ROOMS.......")
       UserActor.rooms.values.foreach(println)
@@ -129,6 +134,25 @@ class UserActor(val user: User) extends Actor with ActorLogging{
         // only list rooms that this user is a member in
         "rooms" -> UserActor.rooms.filter( r => r._2.members.contains(user.username) ).values.map(_.toJson)
       ))
+    }),
+    "room-leave" ->((json: JsValue) =>{
+      log.info(s"webrtc: $json")
+      val room = (json \ "data" \ "room").as[String]
+      UserActor.rooms.filter{ case (s, r) => r.owner == user.username && r.name == room }.foreach {
+        case (s, r) =>
+          r.members.foreach { m =>
+            UserActor.route(user.username, context.self, JsonRequest("room-invite", Json.obj(
+              "slot" -> "room",
+              "op" -> "invite",
+              "data" -> Json.obj(
+                "actors" -> Json.arr(m),
+                "room" -> r.toJson
+              )
+            )))
+          }
+      }
+      UserActor.rooms = UserActor.rooms.filterNot{ case (s, r) => r.owner == user.username && r.name == room }
+      Future.successful(Json.obj())
     }),
     "webrtc-relay" ->((json: JsValue) =>{
       log.info(s"webrtc: $json")
@@ -210,8 +234,6 @@ class UserActor(val user: User) extends Actor with ActorLogging{
             )
           ))
       }
-
-
 
     case d: UserSocketDisconnect =>
       log.info(s"UserActor::UserSocketDisconnect")
