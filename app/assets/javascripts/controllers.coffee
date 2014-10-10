@@ -71,6 +71,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     muteVideo: false
     hangup: ->
       worker.webrtc().stop()
+      worker.onNext({slot:'room',op:'hangup',data:{room:$scope.room}})
     call: (name) ->
       alert('call')
     toggleMuteVideo: ->
@@ -136,12 +137,17 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     console.log('ret.data.members',ret.data.members)
     worker.webrtc().init($scope.room, true)
   )
+  roomSubDestry = roomSubject.filter( (r) -> r.op == 'destroy').subscribe( (ret) ->
+    console.log('ret',ret)
+    alert('This room is no longer available...')
+  )
 
   worker.onNext({slot:'room',op:'join',data:{name: $scope.room, members:$scope.members}})
 
   $scope.$on("$destroy", ->
     worker.webrtc().stop()
     roomSub.dispose()
+    roomSubDestry.dispose()
   )
 
 ).controller('AppCtrl',($scope, $routeParams, $location, worker) ->
