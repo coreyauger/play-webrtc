@@ -1,5 +1,16 @@
 import com.typesafe.sbt.web.SbtWeb.autoImport._
 import com.typesafe.sbt.less.Import.LessKeys
+import NativePackagerKeys._
+
+import com.typesafe.sbt.less.Import.LessKeys
+
+import sbt.Keys._
+
+import WebKeys._
+
+packageDescription in Debian := "play-webrtc"
+
+maintainer in Debian := "Corey Auger corey@nxtwv.com"
 
 name := """play-webrtc"""
 
