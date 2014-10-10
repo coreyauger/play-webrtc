@@ -138,7 +138,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     worker.webrtc().init($scope.room, true)
   )
   roomSubDestry = roomSubject.filter( (r) -> r.op == 'destroy').subscribe( (ret) ->
-    console.log('ret',destroy)
+    console.log('ret',ret)
     alert('This room is no longer available...')
   )
 
