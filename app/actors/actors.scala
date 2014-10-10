@@ -141,7 +141,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
       UserActor.rooms.filter{ case (s, r) => r.owner == user.username && r.name == room }.foreach {
         case (s, r) =>
           r.members.foreach { m =>
-            UserActor.route(user.username, context.self, JsonRequest("room-invite", Json.obj(
+            UserActor.route(user.username, context.self, JsonRequest("room-destroy", Json.obj(
               "slot" -> "room",
               "op" -> "destroy",
               "data" -> Json.obj(
