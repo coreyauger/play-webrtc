@@ -143,7 +143,7 @@ class UserActor(val user: User) extends Actor with ActorLogging{
           r.members.foreach { m =>
             UserActor.route(user.username, context.self, JsonRequest("room-invite", Json.obj(
               "slot" -> "room",
-              "op" -> "invite",
+              "op" -> "destroy",
               "data" -> Json.obj(
                 "actors" -> Json.arr(m),
                 "room" -> r.toJson
