@@ -71,7 +71,7 @@ webrtcControllers.controller('HomeCtrl', ($scope, $routeParams, $location, worke
     muteVideo: false
     hangup: ->
       worker.webrtc().stop()
-      worker.onNext({slot:'room',op:'hangup',data:{room:$scope.room}})
+      worker.onNext({slot:'room',op:'leave',data:{room:$scope.room}})
     call: (name) ->
       alert('call')
     toggleMuteVideo: ->
